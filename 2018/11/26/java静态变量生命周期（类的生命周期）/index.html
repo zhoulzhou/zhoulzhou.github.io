@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Static：加载：java虚拟机在加载类的过程中为静态变量分配内存。    类变量：static变量在内存中只有一个，存放在方法区，属于类变量，被所有实例所共享     销毁：类被卸载时，静态变量被销毁，并释放内存空间。static变量的生命周期取决于类的生命周期 类初始化顺序：    静态变量、静态代码块初始化     构造函数    *自定义构造函数 结论：想要用static存一个变量，使得">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java静态变量生命周期（类的生命周期）">
+<meta property="og:url" content="http://yoursite.com/2018/11/26/java静态变量生命周期（类的生命周期）/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="Static：加载：java虚拟机在加载类的过程中为静态变量分配内存。    类变量：static变量在内存中只有一个，存放在方法区，属于类变量，被所有实例所共享     销毁：类被卸载时，静态变量被销毁，并释放内存空间。static变量的生命周期取决于类的生命周期 类初始化顺序：    静态变量、静态代码块初始化     构造函数    *自定义构造函数 结论：想要用static存一个变量，使得">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-11-26T12:17:37.211Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java静态变量生命周期（类的生命周期）">
+<meta name="twitter:description" content="Static：加载：java虚拟机在加载类的过程中为静态变量分配内存。    类变量：static变量在内存中只有一个，存放在方法区，属于类变量，被所有实例所共享     销毁：类被卸载时，静态变量被销毁，并释放内存空间。static变量的生命周期取决于类的生命周期 类初始化顺序：    静态变量、静态代码块初始化     构造函数    *自定义构造函数 结论：想要用static存一个变量，使得">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/11/26/java静态变量生命周期（类的生命周期）/">
+
+
+
+
+
+  <title>java静态变量生命周期（类的生命周期） | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/26/java静态变量生命周期（类的生命周期）/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">java静态变量生命周期（类的生命周期）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-26T19:53:49+08:00">
+                2018-11-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/JAVA基础知识/" itemprop="url" rel="index">
+                    <span itemprop="name">JAVA基础知识</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="Static："><a href="#Static：" class="headerlink" title="Static："></a>Static：</h4><p>加载：java虚拟机在加载类的过程中为静态变量分配内存。<br>    <em><br>类变量：static变量在内存中只有一个，存放在方法区，属于类变量，被所有实例所共享
+    </em><br>销毁：类被卸载时，静态变量被销毁，并释放内存空间。static变量的生命周期取决于类的生命周期</p>
+<p>类初始化顺序：<br>    <em><br>静态变量、静态代码块初始化
+    </em><br>构造函数<br>    *<br>自定义构造函数</p>
+<p>结论：想要用static存一个变量，使得下次程序运行时还能使用上次的值是不可行的。因为静态变量生命周期虽然长（就是类的生命周期），但是当程序执行完，也就是该类的所有对象都已经被回收，或者加载类的ClassLoader已经被回收，那么该类就会从jvm的方法区卸载，即生命期终止。<br>更进一步来说，static变量终究是存在jvm的内存中的，jvm下次重新运行时，肯定会清空里边上次运行的内容，包括方法区、常量区的内容。<br>要实现某些变量在程序多次运行时都可以读取，那么必须要将变量存下来，即存到本地文件中。常用的数据存取格式：XML、JSON、Propertities类（类似map的键值对）等引言<br>        最近有位细心的朋友在阅读笔者的文章时，对java类的生命周期问题有一些疑惑，笔者打开百度搜了一下相关的问题，看到网上的资料很少有把这个问题讲明白的，主要是因为目前国内java方面的教材大多只是告诉你“怎样做”，但至于“为什么这样做”却不多说，所以造成大家在基础和原理方面的知识比较匮乏，所以笔者今天就斗胆来讲一下这个问题，权当抛砖引玉，希望对在这个问题上有疑惑的朋友有所帮助，文中有说的不对的地方，也希望各路高手前来指正。<br>        首先来了解一下jvm（java虚拟机）中的几个比较重要的内存区域，这几个区域在java类的生命周期中扮演着比较重要的角色：<br>    <em><br>方法区：在java的虚拟机中有一块专门用来存放已经加载的类信息、常量、静态变量以及方法代码的内存区域，叫做方法区。
+    </em><br>常量池：常量池是方法区的一部分，主要用来存放常量和类中的符号引用等信息。<br>    <em><br>堆区：用于存放类的对象实例。
+    </em><br>栈区：也叫java虚拟机栈，是由一个一个的栈帧组成的后进先出的栈式结构，栈桢中存放方法运行时产生的局部变量、方法出口等信息。当调用一个方法时，虚拟机栈中就会创建一个栈帧存放这些数据，当方法调用完成时，栈帧消失，如果方法中调用了其他方法，则继续在栈顶创建新的栈桢。</p>
+<pre><code>除了以上四个内存区域之外，jvm中的运行时内存区域还包括本地方法栈和程序计数器，这两个区域与java类的生命周期关系不是很大，在这里就不说了，感兴趣的朋友可以自己百度一下。
+</code></pre><h4 id="类的生命周期"><a href="#类的生命周期" class="headerlink" title="类的生命周期"></a>类的生命周期</h4><pre><code>当我们编写一个java的源文件后，经过编译会生成一个后缀名为class的文件，这种文件叫做字节码文件，只有这种字节码文件才能够在java虚拟机中运行，java类的生命周期就是指一个class文件从加载到卸载的全过程。
+一个java类的完整的生命周期会经历加载、连接、初始化、使用、和卸载五个阶段，当然也有在加载或者连接之后没有被初始化就直接被使用的情况，如图所示：
+</code></pre><p>下面我们就依次来说一说这五个阶段。<br> 加载<br>       在java中，我们经常会接触到一个词——类加载，它和这里的加载并不是一回事，通常我们说类加载指的是类的生命周期中加载、连接、初始化三个阶段。在加载阶段，java虚拟机会做什么工作呢？其实很简单，就是找到需要加载的类并把类的信息加载到jvm的方法区中，然后在堆区中实例化一个java.lang.Class对象，作为方法区中这个类的信息的入口。<br>       类的加载方式比较灵活，我们最常用的加载方式有两种，一种是根据类的全路径名找到相应的class文件，然后从class文件中读取文件内容；另一种是从jar文件中读取。另外，还有下面几种方式也比较常用：<br>    <em><br>从网络中获取：比如10年前十分流行的Applet。
+    </em><br>根据一定的规则实时生成，比如设计模式中的动态代理模式，就是根据相应的类自动生成它的代理类。<br>    *<br>从非class文件中获取，其实这与直接从class文件中获取的方式本质上是一样的，这些非class文件在jvm中运行之前会被转换为可被jvm所识别的字节码文件。</p>
+<pre><code>对于加载的时机，各个虚拟机的做法并不一样，但是有一个原则，就是当jvm“预期”到一个类将要被使用时，就会在使用它之前对这个类进行加载。比如说，在一段代码中出现了一个类的名字，jvm在执行这段代码之前并不能确定这个类是否会被使用到，于是，有些jvm会在执行前就加载这个类，而有些则在真正需要用的时候才会去加载它，这取决于具体的jvm实现。我们常用的hotspot虚拟机是采用的后者，就是说当真正用到一个类的时候才对它进行加载。
+加载阶段是类的生命周期中的第一个阶段，加载阶段之后，是连接阶段。有一点需要注意，就是有时连接阶段并不会等加载阶段完全完成之后才开始，而是交叉进行，可能一个类只加载了一部分之后，连接阶段就已经开始了。但是这两个阶段总的开始时间和完成时间总是固定的：加载阶段总是在连接阶段之前开始，连接阶段总是在加载阶段完成之后完成。
+</code></pre><p> 连接<br>       连接阶段比较复杂，一般会跟加载阶段和初始化阶段交叉进行，这个阶段的主要任务就是做一些加载后的验证工作以及一些初始化前的准备工作，可以细分为三个步骤：验证、准备和解析。<br>    1.<br>验证：当一个类被加载之后，必须要验证一下这个类是否合法，比如这个类是不是符合字节码的格式、变量与方法是不是有重复、数据类型是不是有效、继承与实现是否合乎标准等等。总之，这个阶段的目的就是保证加载的类是能够被jvm所运行。<br>    2.<br>准备：准备阶段的工作就是为类的静态变量分配内存并设为jvm默认的初值，对于非静态的变量，则不会为它们分配内存。有一点需要注意，这时候，静态变量的初值为jvm默认的初值，而不是我们在程序中设定的初值。jvm默认的初值是这样的： 解析：这一阶段的任务就是把常量池中的符号引用转换为直接引用。那么什么是符号引用，什么又是直接引用呢？我们来举个例子：我们要找一个人，我们现有的信息是这个人的身份证号是1234567890。只有这个信息我们显然找不到这个人，但是通过公安局的身份系统，我们输入1234567890这个号之后，就会得到它的全部信息：比如安徽省黄山市余暇村18号张三，通过这个信息我们就能找到这个人了。这里，123456790就好比是一个符号引用，而安徽省黄山市余暇村18号张三就是直接引用。在内存中也是一样，比如我们要在内存中找一个类里面的一个叫做show的方法，显然是找不到。但是在解析阶段，jvm就会把show这个名字转换为指向方法区的的一块内存地址，比如c17164，通过c17164就可以找到show这个方法具体分配在内存的哪一个区域了。这里show就是符号引用，而c17164就是直接引用。在解析阶段，jvm会将所有的类或接口名、字段名、方法名转换为具体的内存地址。</p>
+<pre><code>*
+</code></pre><p>基本类型（int、long、short、char、byte、boolean、float、double）的默认值为0。<br>        <em><br>引用类型的默认值为null。
+        </em><br>常量的默认值为我们程序中设定的值，比如我们在程序中定义final static int a = 100，则准备阶段中a的初值就是100。<br>    3.</p>
+<pre><code>连接阶段完成之后会根据使用的情况（直接引用还是被动引用）来选择是否对类进行初始化。
+</code></pre><p> 初始化<br>       如果一个类被直接引用，就会触发类的初始化。在java中，直接引用的情况有：<br>    <em><br>通过new关键字实例化对象、读取或设置类的静态变量、调用类的静态方法。
+    </em><br>通过反射方式执行以上三种行为。<br>    <em><br>初始化子类的时候，会触发父类的初始化。
+    </em><br>作为程序入口直接运行时（也就是直接调用main方法）。</p>
+<pre><code>除了以上四种情况，其他使用类的方式叫做被动引用，而被动引用不会触发类的初始化。请看主动引用的示例代码：
+</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">import java.lang.reflect.Field;  </span><br><span class="line">import java.lang.reflect.Method;  </span><br><span class="line"></span><br><span class="line">class InitClass&#123;  </span><br><span class="line">    static &#123;  </span><br><span class="line">        System.out.println(&quot;初始化InitClass&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static String a = null;  </span><br><span class="line">    public static void method()&#123;&#125;  </span><br><span class="line">&#125;  </span><br><span class="line">class SubInitClass extends InitClass&#123;&#125;  </span><br><span class="line">public class Test1 &#123;  </span><br><span class="line">    /**</span><br><span class="line">     * 主动引用引起类的初始化的第四种情况就是运行Test1的main方法时</span><br><span class="line">     * 导致Test1初始化，这一点很好理解，就不特别演示了。</span><br><span class="line">     * 本代码演示了前三种情况，以下代码都会引起InitClass的初始化，</span><br><span class="line">     * 但由于初始化只会进行一次，运行时请将注解去掉，依次运行查看结果。</span><br><span class="line">     * @param args</span><br><span class="line">     * @throws Exception</span><br><span class="line">     */  </span><br><span class="line">    public static void main(String[] args) throws Exception&#123;  </span><br><span class="line">    //  主动引用引起类的初始化一: new对象、读取或设置类的静态变量、调用类的静态方法。</span><br><span class="line">    //  new InitClass();  </span><br><span class="line">    //  InitClass.a = &quot;&quot;;  </span><br><span class="line">    //  String a = InitClass.a;  </span><br><span class="line">    //  InitClass.method();  </span><br><span class="line"></span><br><span class="line">    //  主动引用引起类的初始化二：通过反射实例化对象、读取或设置类的静态变量、调用类的静态方法。</span><br><span class="line">    //  Class cls = InitClass.class;  </span><br><span class="line">    //  cls.newInstance();  </span><br><span class="line">    //  Field f = cls.getDeclaredField(&quot;a&quot;);  </span><br><span class="line">    //  f.get(null);  </span><br><span class="line">    //  f.set(null, &quot;s&quot;);  </span><br><span class="line">    //  Method md = cls.getDeclaredMethod(&quot;method&quot;);  </span><br><span class="line">    //  md.invoke(null, null);  </span><br><span class="line">    //  主动引用引起类的初始化三：实例化子类，引起父类初始化。  </span><br><span class="line">    //  new SubInitClass();  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>上面的程序演示了主动引用触发类的初始化的四种情况。
+
+类的初始化过程是这样的：按照顺序自上而下运行类中的变量赋值语句和静态语句，如果有父类，则首先按照顺序运行父类中的变量赋值语句和静态语句。先看一个例子，首先建两个类用来显示赋值操作：
+</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public class Field1&#123;  </span><br><span class="line">    public Field1()&#123;  </span><br><span class="line">        System.out.println(&quot;Field1构造方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line">public class Field2&#123;  </span><br><span class="line">    public Field2()&#123;  </span><br><span class="line">        System.out.println(&quot;Field2构造方法&quot;);</span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面是演示初始化顺序的代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">class InitClass2&#123;  </span><br><span class="line">    static&#123;  </span><br><span class="line">        System.out.println(&quot;运行父类静态代码&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static Field1 f1 = new Field1();  </span><br><span class="line">    public static Field1 f2;   </span><br><span class="line">&#125;  </span><br><span class="line">class SubInitClass2 extends InitClass2&#123;  </span><br><span class="line">    static&#123;  </span><br><span class="line">        System.out.println(&quot;运行子类静态代码&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static Field2 f2 = new Field2();  </span><br><span class="line">&#125;  </span><br><span class="line">public class Test2 &#123;  </span><br><span class="line">    public static void main(String[] args) throws ClassNotFoundException&#123;  </span><br><span class="line">        new SubInitClass2();  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<pre><code>上面的代码中，初始化的顺序是：第03行，第05行，第11行，第13行。第04行是声明操作，没有赋值，所以不会被运行。而下面的代码：
+</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">class InitClass2&#123;  </span><br><span class="line">    public static Field1 f1 = new Field1();  </span><br><span class="line">    public static Field1 f2;  </span><br><span class="line">    static&#123;  </span><br><span class="line">        System.out.println(&quot;运行父类静态代码&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line">class SubInitClass2 extends InitClass2&#123;  </span><br><span class="line">    public static Field2 f2 = new Field2();  </span><br><span class="line">    static&#123;  </span><br><span class="line">        System.out.println(&quot;运行子类静态代码&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line">public class Test2 &#123;  </span><br><span class="line">    public static void main(String[] args) throws ClassNotFoundException&#123;  </span><br><span class="line">        new SubInitClass2();  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code> 初始化顺序为：第02行、第05行、第10行、第12行，各位可以运行程序查看结果。
+在类的初始化阶段，只会初始化与类相关的静态赋值语句和静态语句，也就是有static关键字修饰的信息，而没有static修饰的赋值语句和执行语句在实例化对象的时候才会运行。
+</code></pre><p> 使用<br>       类的使用包括主动引用和被动引用，主动引用在初始化的章节中已经说过了，下面我们主要来说一下被动引用：<br>    <em><br>引用父类的静态字段，只会引起父类的初始化，而不会引起子类的初始化。
+    </em><br>定义类数组，不会引起类的初始化。<br>    *<br>引用类的常量，不会引起类的初始化。</p>
+<p>被动引用的示例代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">class InitClass&#123;  </span><br><span class="line">    static &#123;  </span><br><span class="line">        System.out.println(&quot;初始化InitClass&quot;);   </span><br><span class="line">    &#125;  </span><br><span class="line">    public static String a = null;  </span><br><span class="line">    public final static String b = &quot;b&quot;;  </span><br><span class="line">    public static void method()&#123;&#125;  </span><br><span class="line">&#125;  </span><br><span class="line">class SubInitClass extends InitClass&#123;  </span><br><span class="line">    static &#123;  </span><br><span class="line">        System.out.println(&quot;初始化SubInitClass&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line">public class Test4 &#123;  </span><br><span class="line">    public static void main(String[] args) throws Exception&#123;   </span><br><span class="line">    //  String a = SubInitClass.a;// 引用父类的静态字段，只会引起父类初始化，而不会引起子类的初始化   </span><br><span class="line">    //  String b = InitClass.b;// 使用类的常量不会引起类的初始化  </span><br><span class="line">        SubInitClass[] sc = new SubInitClass[10];// 定义类数组不会引起类的初始化  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<pre><code>最后总结一下使用阶段：使用阶段包括主动引用和被动引用，主动饮用会引起类的初始化，而被动引用不会引起类的初始化。
+当使用阶段完成之后，java类就进入了卸载阶段。
+</code></pre><p> 卸载<br>       关于类的卸载，笔者在单例模式讨论篇：单例模式与垃圾回收一文中有过描述，在类使用完之后，如果满足下面的情况，类就会被卸载：<br>    <em><br>该类所有的实例都已经被回收，也就是java堆中不存在该类的任何实例。
+    </em><br>加载该类的ClassLoader已经被回收。<br>    *<br>该类对应的java.lang.Class对象没有任何地方被引用，无法在任何地方通过反射访问该类的方法。</p>
+<pre><code>如果以上三个条件全部满足，jvm就会在方法区垃圾回收的时候对类进行卸载，类的卸载过程其实就是在方法区中清空类信息，java类的整个生命周期就结束了。
+</code></pre><h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><pre><code>做java的朋友对于对象的生命周期可能都比较熟悉，对象基本上都是在jvm的堆区中创建，在创建对象之前，会触发类加载（加载、连接、初始化），当类初始化完成后，根据类信息在堆区中实例化类对象，初始化非静态变量、非静态代码以及默认构造方法，当对象使用完之后会在合适的时候被jvm垃圾收集器回收。读完本文后我们知道，对象的生命周期只是类的生命周期中使用阶段的主动引用的一种情况（即实例化类对象）。而类的整个生命周期则要比对象的生命周期长的多。
+</code></pre>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/26/多端部署/" rel="next" title="多端部署">
+                <i class="fa fa-chevron-left"></i> 多端部署
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Static："><span class="nav-number">1.</span> <span class="nav-text">Static：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#类的生命周期"><span class="nav-number">2.</span> <span class="nav-text">类的生命周期</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
