@@ -219,6 +219,348 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/28/ArrayList原理及使用说明/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/28/ArrayList原理及使用说明/" itemprop="url">ArrayList原理及使用说明</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-28T16:13:36+08:00">
+                2018-11-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/JAVA/" itemprop="url" rel="index">
+                    <span itemprop="name">JAVA</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h4><p>作为Android开发者，Java集合可能是开发中最常使用的类之一了。但很多人可能跟我一样，对Java集合只停留在“使用”的层面上，而对其的实现、原理如何只是略知一二，所以有时可能忽略了一些小细节。这些细节可能对项目的整体性能影响不大，但我觉得，要成为一个好的程序员，必须要精益求精，对代码性能“锱铢必较”。</p>
+<p>举个例子，各位在创建ArrayList实例时有没有想过到底要不要指定其初始容量？指定了会怎样？不指定又会怎样？如果你跟博主我有同样的困惑，那么本文一定能给你个满意的答案！</p>
+<h4 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h4><p>ArrayLIst的细节</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/java/list.png" alt="avatar"></p>
+<p>细节1：ArrayList基于数组实现，访问元素效率快，插入删除元素效率慢<br>ArrayList是基于数组实现的，这个似乎不是什么秘密了，但为了文章的完整性，还是要介绍下。ArrayList内部维护一个数组elementData，用于保存列表元素，基于数组的数组这数据结构，我们知道，其索引元素是非常快的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public E get(int index) &#123;</span><br><span class="line">    if (index &gt;= size)</span><br><span class="line">        throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span><br><span class="line"></span><br><span class="line">    return (E) elementData[index]; // 索引无需遍历，效率非常高！</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public E set(int index, E element) &#123;</span><br><span class="line">    if (index &gt;= size)</span><br><span class="line">        throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span><br><span class="line"></span><br><span class="line">    E oldValue = (E) elementData[index];</span><br><span class="line">    elementData[index] = element; // 索引无需遍历，效率非常高！</span><br><span class="line">    return oldValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，get、set直接根据索引获取了目标元素，中间不用做任何的遍历操作，效率是非常快的。但是对于插入和删除操作效率就不太理想了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public void add(int index, E element) &#123;</span><br><span class="line">    if (index &gt; size || index &lt; 0)</span><br><span class="line">        throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span><br><span class="line"></span><br><span class="line">    ensureCapacityInternal(size + 1);  // 先判断是否需要扩容</span><br><span class="line">    System.arraycopy(elementData, index, elementData, index + 1, // 把index后面的元素都向后偏移一位</span><br><span class="line">            size - index);</span><br><span class="line">    elementData[index] = element;</span><br><span class="line">    size++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从插入操作的源码可以看到，插入前，要先判断是否需要扩容（扩容后面会讲，这里先跳过），然后把Index后面的元素都偏移一位，这里的偏移是需要把元素复制后，再赋值当前元素的后一索引的位置。显然，这样一来，插入一个元素，牵连到多个元素，效率自然就低了。再来看看删除操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public E remove(int index) &#123;</span><br><span class="line">    if (index &gt;= size)</span><br><span class="line">        throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span><br><span class="line"></span><br><span class="line">    modCount++;</span><br><span class="line">    E oldValue = (E) elementData[index];</span><br><span class="line"></span><br><span class="line">    int numMoved = size - index - 1;</span><br><span class="line">    if (numMoved &gt; 0) &#123;</span><br><span class="line">        // 把index后面的元素向前偏移一位，填补删除的元素</span><br><span class="line">        System.arraycopy(elementData, index + 1, elementData, index,</span><br><span class="line">                numMoved);</span><br><span class="line">    &#125;</span><br><span class="line">    elementData[--size] = null; // clear to let GC do its work</span><br><span class="line"></span><br><span class="line">    return oldValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同样，删除一个元素，需要把index后面的元素向前偏移一位，填补删除的元素，也是牵连了多个元素。所以大家在使用时要谨慎了！</p>
+<h4 id="细节2：ArrayList支持快速随机访问"><a href="#细节2：ArrayList支持快速随机访问" class="headerlink" title="细节2：ArrayList支持快速随机访问"></a>细节2：ArrayList支持快速随机访问</h4><p>什么是随机访问？我们不防先来看看ArrayList的类定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">public class ArrayList&lt;E&gt; extends AbstractList&lt;E&gt;</span><br><span class="line">        implements List&lt;E&gt;, RandomAccess, Cloneable, java.io.Serializable</span><br></pre></td></tr></table></figure>
+<p>看到RandomAccess了吗，这个就是支持快速随机访问的标记，我们再点进去看看其源码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * ...</span><br><span class="line"> * &lt;p&gt;It is recognized that the distinction between random and sequential</span><br><span class="line"> * access is often fuzzy.  For example, some &lt;tt&gt;List&lt;/tt&gt; implementations</span><br><span class="line"> * provide asymptotically linear access times if they get huge, but constant</span><br><span class="line"> * access times in practice.  Such a &lt;tt&gt;List&lt;/tt&gt; implementation</span><br><span class="line"> * should generally implement this interface.  As a rule of thumb, a</span><br><span class="line"> * &lt;tt&gt;List&lt;/tt&gt; implementation should implement this interface if,</span><br><span class="line"> * for typical instances of the class, this loop:</span><br><span class="line"> * &lt;pre&gt;</span><br><span class="line"> *     for (int i=0, n=list.size(); i &amp;amp;lt; n; i++)</span><br><span class="line"> *         list.get(i);</span><br><span class="line"> * &lt;/pre&gt;</span><br><span class="line"> * runs faster than this loop:</span><br><span class="line"> * &lt;pre&gt;</span><br><span class="line"> *     for (Iterator i=list.iterator(); i.hasNext(); )</span><br><span class="line"> *         i.next();</span><br><span class="line"> * &lt;/pre&gt;</span><br><span class="line"> * ...</span><br><span class="line"> */</span><br><span class="line">public interface RandomAccess &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>额，是一个接口，没有任何的属性或方法定义。其实它只是一个标记，继承于它就相当于告诉别人，我支持快速随机访问，上面代码我特意留下部分的注释说明，其中关键的部分在说，<strong>通常情况下，使用索引访问的效率比使用迭代器访问的效率快！</strong></p>
+<p>我们把目光暂时转移到Collections类下，其中有很多基于是否有继承于RandomAccess的List做不同的算法选择判断，我们来看其中的二分查找算法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public static &lt;T&gt; int binarySearch(List&lt;? extends Comparable&lt;? super T&gt;&gt; list, T key) &#123;</span><br><span class="line">    if (list instanceof RandomAccess || list.size()&lt;BINARYSEARCH_THRESHOLD)</span><br><span class="line">        // 当List实现了RandomAccess或小于一定阀值时，使用索引二分查找算法</span><br><span class="line">        return Collections.indexedBinarySearch(list, key);</span><br><span class="line">    else</span><br><span class="line">        return Collections.iteratorBinarySearch(list, key);</span><br></pre></td></tr></table></figure>
+<p>所以快速随机访问是针对于Collections中的方法而言的（其他类是否也有？欢迎大神们补充），支持快速随机访问时，就选择索引访问，效率会很快。</p>
+<p>另外，从上面的二分查找算法我们又能得到一个提高效率的小细节：我们知道List是提供了IndexOf和lastIndexOf方法来检索元素的，它们分别是从头和尾开始，一个一个比较的，那么显然，使用Collections#binarySearch在大多数情况效率会比<br>IndexOf和lastIndexOf更快～</p>
+<h4 id="细节3：大多数情况下，我们都应该指定ArrayList的初始容量"><a href="#细节3：大多数情况下，我们都应该指定ArrayList的初始容量" class="headerlink" title="细节3：大多数情况下，我们都应该指定ArrayList的初始容量"></a>细节3：大多数情况下，我们都应该指定ArrayList的初始容量</h4><p>如果说上面所介绍的细节大部分童鞋都知道，那这个细节相信很多人都不知道，包括在看源码之前的我。在讲为什么之前，我们需要先来了解ArrayList的扩容机制。</p>
+<p>ArrayList每次扩容至少为原来容量大小的1.5倍，其默认容量是10，当你不为其指定初始容量时，它就会创建默认容量大小为10的数组：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">// 默认最小容量</span><br><span class="line">private static final int DEFAULT_CAPACITY = 10;</span><br><span class="line"></span><br><span class="line">// 空数组</span><br><span class="line">private static final Object[] EMPTY_ELEMENTDATA = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">// 默认容量空数组，可以理解为一个标记</span><br><span class="line">private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">// 指定最小容量创建列表</span><br><span class="line">public ArrayList(int initialCapacity) &#123;</span><br><span class="line">    if (initialCapacity &gt; 0) &#123;</span><br><span class="line">        this.elementData = new Object[initialCapacity];</span><br><span class="line">    &#125; else if (initialCapacity == 0) &#123;</span><br><span class="line">        this.elementData = EMPTY_ELEMENTDATA;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        throw new IllegalArgumentException(&quot;Illegal Capacity: &quot;+</span><br><span class="line">                initialCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 创建默认空列表</span><br><span class="line">public ArrayList() &#123;</span><br><span class="line">    this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA; // 默认容量空数组</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们经常使用ArrayList的默认构造函数来创建实例，等等，不是说不指定初始容量会创建默认容量大小为10的数组吗？但这里只赋值了空数组。是的，还记得我们上面分析的add源码有个扩容操作吗？<strong>如果使用默认构造函数来创建实例，在第一次添加元素时，就会进行扩容，扩容到默认容量10的数组：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">// 每次添加元素都会调用</span><br><span class="line">private void ensureCapacityInternal(int minCapacity) &#123;</span><br><span class="line">    if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) &#123;</span><br><span class="line">        // 如果为默认容量空数组的话，添加元素时，至少扩容到默认最小容量</span><br><span class="line">        minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ensureExplicitCapacity(minCapacity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void ensureExplicitCapacity(int minCapacity) &#123;</span><br><span class="line">    modCount++;</span><br><span class="line"></span><br><span class="line">    // overflow-conscious code</span><br><span class="line">    if (minCapacity - elementData.length &gt; 0) // 大于当前容量就扩容</span><br><span class="line">        grow(minCapacity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 扩容</span><br><span class="line">private void grow(int minCapacity) &#123;</span><br><span class="line">    // overflow-conscious code</span><br><span class="line">    int oldCapacity = elementData.length;</span><br><span class="line">    int newCapacity = oldCapacity + (oldCapacity &gt;&gt; 1); // 1.5倍原来大小</span><br><span class="line">    // 先尝试扩容到1.5倍原来容量的大小，如果比用户指定的大，那么就扩容1.5倍</span><br><span class="line">    // 否则扩容用户指定的</span><br><span class="line">    if (newCapacity - minCapacity &lt; 0)</span><br><span class="line">        newCapacity = minCapacity;</span><br><span class="line">    if (newCapacity - MAX_ARRAY_SIZE &gt; 0)</span><br><span class="line">        newCapacity = hugeCapacity(minCapacity);</span><br><span class="line">    // minCapacity is usually close to size, so this is a win:</span><br><span class="line">    elementData = Arrays.copyOf(elementData, newCapacity);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所谓“扩容”就是创建一个长度更大的数组，再把旧数组的元素全部赋值到新数组。显然，这个操作效率也是不理想的。虽然使用默认构造函数创建的实例，在第一次添加元素的扩容并没有元素复制，但还是要另外创建一个数组，并且是大小为10的数组，可能你并不需要这么大的数组，可能是3，可能是5，那么我们为何不一开始就指定其容量呢？</p>
+<p>指定初始容量的方法也很简单，我们使用带int参数的构造函数就可以了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 指定最小容量创建列表</span><br><span class="line">public ArrayList(int initialCapacity) &#123;</span><br><span class="line">    if (initialCapacity &gt; 0) &#123;</span><br><span class="line">        this.elementData = new Object[initialCapacity];</span><br><span class="line">    &#125; else if (initialCapacity == 0) &#123;</span><br><span class="line">        this.elementData = EMPTY_ELEMENTDATA;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        throw new IllegalArgumentException(&quot;Illegal Capacity: &quot;+</span><br><span class="line">                initialCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>或者有童鞋会说，使用ensureCapacity指定容量也行，其实不然，为何ensureCapacity对容量大小有限制：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">// 指定最小容量</span><br><span class="line">public void ensureCapacity(int minCapacity) &#123;</span><br><span class="line">    int minExpand = (elementData != DEFAULTCAPACITY_EMPTY_ELEMENTDATA)</span><br><span class="line">            // any size if not default element table</span><br><span class="line">            ? 0</span><br><span class="line">            // larger than default for default empty table. It&apos;s already</span><br><span class="line">            // supposed to be at default size.</span><br><span class="line">            : DEFAULT_CAPACITY;</span><br><span class="line"></span><br><span class="line">    // 指定最小容量成功的情况</span><br><span class="line">    // 1.使用 new ArrayList() 创建实例并添加元素前，指定容量大小不能小于默认容量10</span><br><span class="line">    // 2.列表已存在元素，指定容量大小不能小于当前容量大小</span><br><span class="line">    if (minCapacity &gt; minExpand) &#123;</span><br><span class="line">        ensureExplicitCapacity(minCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以讲到这，相信大家有答案了，<strong>为什么创建ArrayList要指定其初始容量？显然我们是不希望它进行耗时的扩容操作，并且能在我们预知的情况下尽量使用大小刚刚好的列表，而不浪费任何资源。</strong>那么我们可以得到以下经验：</p>
+<p>都不应该使用默认构造函数创建实例，以免自动扩容到默认最小容量（10）</p>
+<p>当列表容量确定，应该指定容量的方式创建实例</p>
+<p>当列表容量不确定时，可以预估我们将有会多少元素，指定稍大于预估值的容量</p>
+<h4 id="LinkedList的细节"><a href="#LinkedList的细节" class="headerlink" title="LinkedList的细节"></a>LinkedList的细节</h4><p>再来看看我们熟悉的LinkedList的细节～<br>细节1：LinkedList基于链表实现，插入删除元素效率快，访问元素效率慢<br>LinkedList内部维护一个双端链表，可以从头开始检索，也可以从尾开始检索。同样的，得益于链表这一数据结构，LinkedList在插入和删除元素效率非常快。</p>
+<p>插入元素只需新建一个node，再把前后指针指向对应的前后元素即可：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/java/list111.png" alt="avatar"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">// 链尾追加</span><br><span class="line">void linkLast(E e) &#123;</span><br><span class="line">    final Node&lt;E&gt; l = last;</span><br><span class="line">    final Node&lt;E&gt; newNode = new Node&lt;&gt;(l, e, null);</span><br><span class="line">    last = newNode;</span><br><span class="line">    if (l == null)</span><br><span class="line">        first = newNode;</span><br><span class="line">    else</span><br><span class="line">        l.next = newNode;</span><br><span class="line">    size++;</span><br><span class="line">    modCount++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 指定节点前插入</span><br><span class="line">void linkBefore(E e, Node&lt;E&gt; succ) &#123;</span><br><span class="line">    // assert succ != null;</span><br><span class="line">    // 插入节点，succ为Index的节点，可以看到，是插入到index节点的前一个节点</span><br><span class="line">    final Node&lt;E&gt; pred = succ.prev;</span><br><span class="line">    final Node&lt;E&gt; newNode = new Node&lt;&gt;(pred, e, succ);</span><br><span class="line">    succ.prev = newNode;</span><br><span class="line">    if (pred == null)</span><br><span class="line">        first = newNode;</span><br><span class="line">    else</span><br><span class="line">        pred.next = newNode;</span><br><span class="line">    size++;</span><br><span class="line">    modCount++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public void add(int index, E element) &#123;</span><br><span class="line">    checkPositionIndex(index);</span><br><span class="line"></span><br><span class="line">    if (index == size)</span><br><span class="line">        linkLast(element);</span><br><span class="line">    else</span><br><span class="line">        linkBefore(element, node(index));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同样，删除元素只要把删除节点的链剪掉，再把前后节点连起来就搞定了：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/java/list2323.png" alt="avatar"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">E unlink(Node&lt;E&gt; x) &#123;</span><br><span class="line">    // assert x != null;</span><br><span class="line">    final E element = x.item;</span><br><span class="line">    final Node&lt;E&gt; next = x.next;</span><br><span class="line">    final Node&lt;E&gt; prev = x.prev;</span><br><span class="line"></span><br><span class="line">    if (prev == null) &#123;</span><br><span class="line">        // 链头</span><br><span class="line">        first = next;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        prev.next = next;</span><br><span class="line">        x.prev = null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (next == null) &#123;</span><br><span class="line">        // 链尾</span><br><span class="line">        last = prev;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        next.prev = prev;</span><br><span class="line">        x.next = null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    x.item = null;</span><br><span class="line">    size--;</span><br><span class="line">    modCount++;</span><br><span class="line">    return element;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public E remove(int index) &#123;</span><br><span class="line">    checkElementIndex(index);</span><br><span class="line">    return unlink(node(index));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但由于链表我们只知道头和尾，中间的元素要遍历获取的，所以导致了访问元素时，效率就不好了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Node&lt;E&gt; node(int index) &#123;</span><br><span class="line">    // 使用了二分法</span><br><span class="line">    if (index &lt; (size &gt;&gt; 1)) &#123; // 如果索引小于二分之一，从first开始遍历</span><br><span class="line">        Node&lt;E&gt; x = first;</span><br><span class="line">        for (int i = 0; i &lt; index; i++)</span><br><span class="line">            x = x.next;</span><br><span class="line">        return x;</span><br><span class="line">    &#125; else &#123; // 如果索引大于二分之一，从last开始遍历</span><br><span class="line">        Node&lt;E&gt; x = last;</span><br><span class="line">        for (int i = size - 1; i &gt; index; i--)</span><br><span class="line">            x = x.prev;</span><br><span class="line">        return x;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public E get(int index) &#123;</span><br><span class="line">    checkElementIndex(index);</span><br><span class="line">    return node(index).item;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以，LinkedList和ArrayList刚好是互补的，所以具体场景，应考虑哪种操作最频繁，从而选择不同的List来使用。</p>
+<h4 id="细节2：LinkedList可以当作队列和栈来使用"><a href="#细节2：LinkedList可以当作队列和栈来使用" class="headerlink" title="细节2：LinkedList可以当作队列和栈来使用"></a>细节2：LinkedList可以当作队列和栈来使用</h4><p>不知大家有没注意到在图2.2中，LinkedList非常“特立独行地”继承了Deque接口，而Deque又继承于Queue接口，这队列和栈的方法定义就是在这些接口中定义的，而LinkedList实现其方法，使自身具备了队列的栈的功能。<br>当作队列（先进先出）使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 进队</span><br><span class="line">public boolean offerFirst(E e) &#123;</span><br><span class="line">    addFirst(e);</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 出队</span><br><span class="line">public E pollLast() &#123;</span><br><span class="line">    final Node&lt;E&gt; l = last;</span><br><span class="line">    return (l == null) ? null : unlinkLast(l);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当作栈（后进又出）来使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// 进栈</span><br><span class="line">public void push(E e) &#123;</span><br><span class="line">    addFirst(e);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 出栈，如果为空列表，会抛出异常</span><br><span class="line">public E pop() &#123;</span><br><span class="line">    return removeFirst();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="SynchronizedList的细节"><a href="#SynchronizedList的细节" class="headerlink" title="SynchronizedList的细节"></a>SynchronizedList的细节</h4><p>在Collections类中提供了很多线程线程的集合类，其实他们实现很简单，只是在集合操作前，加一个锁而已。</p>
+<p>细节1：SynchronizedList继承于SynchronizedCollection，使用装饰者模式，为原来的List加上锁，从而使List同步安全<br>先来看下SynchronizedCollection的定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">static class SynchronizedCollection&lt;E&gt; implements Collection&lt;E&gt;, Serializable &#123;</span><br><span class="line">    private static final long serialVersionUID = 3053995032091335093L;</span><br><span class="line"></span><br><span class="line">    final Collection&lt;E&gt; c; // 装饰的集合</span><br><span class="line">    final Object mutex; // 锁</span><br><span class="line"></span><br><span class="line">    SynchronizedCollection(Collection&lt;E&gt; c) &#123;</span><br><span class="line">        this.c = Objects.requireNonNull(c);</span><br><span class="line">        mutex = this;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    SynchronizedCollection(Collection&lt;E&gt; c, Object mutex) &#123;</span><br><span class="line">        this.c = Objects.requireNonNull(c);</span><br><span class="line">        this.mutex = Objects.requireNonNull(mutex);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，可以指定一个对象作为锁，如果不指定，默认就锁了集合了。<br>再来看下我们关注的SynchronizedList：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">static class SynchronizedList&lt;E&gt;</span><br><span class="line">    extends SynchronizedCollection&lt;E&gt;</span><br><span class="line">    implements List&lt;E&gt; &#123;</span><br><span class="line"></span><br><span class="line">    final List&lt;E&gt; list;</span><br><span class="line"></span><br><span class="line">    SynchronizedList(List&lt;E&gt; list) &#123;</span><br><span class="line">        super(list);</span><br><span class="line">        this.list = list;</span><br><span class="line">    &#125;</span><br><span class="line">    SynchronizedList(List&lt;E&gt; list, Object mutex) &#123;</span><br><span class="line">        super(list, mutex);</span><br><span class="line">        this.list = list;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    public E get(int index) &#123;</span><br><span class="line">        synchronized (mutex) &#123;return list.get(index);&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public E set(int index, E element) &#123;</span><br><span class="line">        synchronized (mutex) &#123;return list.set(index, element);&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public void add(int index, E element) &#123;</span><br><span class="line">        synchronized (mutex) &#123;list.add(index, element);&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public E remove(int index) &#123;</span><br><span class="line">        synchronized (mutex) &#123;return list.remove(index);&#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h4><p>关于我们经常使用的List的细节到此就介绍完了，如果上面我有言论有误或不严谨的，欢迎大家指正；如果有另外一些细节我没谈及到的，也欢迎大神们补充。</p>
+<p>最后，我们来做一次总结：</p>
+<p><strong>ArrayList和LinkedList适用于不同使用场景，应根据具体场景从优选择</strong></p>
+<p><strong>根据ArrayList的扩容机制，我们应该开始就指定其初始容量，避免资源浪费</strong></p>
+<p><strong>LinkedList可以当作队列和栈使用，当然我们也可以进一步封装</strong></p>
+<p><strong>尽量不使用Vector和Stack，同步场景下，使用SynchronizedList替代</strong></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/28/近期计划/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/11/28/近期计划/" itemprop="url">近期计划</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-28T15:52:45+08:00">
+                2018-11-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/如何思考/" itemprop="url" rel="index">
+                    <span itemprop="name">如何思考</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>1、ArrayList<br>2、HashMap<br>3、内存泄漏检测<br>4、HandlerThread<br>5、IntentService<br>6、RecyclerView<br>7、ConstraintLayout</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/27/美联储加息与经济危机的关系“/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -418,8 +760,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA基础知识/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA基础知识</span>
+                  <a href="/categories/JAVA/" itemprop="url" rel="index">
+                    <span itemprop="name">JAVA</span>
                   </a>
                 </span>
 
@@ -1053,8 +1395,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA开发高级知识/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA开发高级知识</span>
+                  <a href="/categories/JAVA/" itemprop="url" rel="index">
+                    <span itemprop="name">JAVA</span>
                   </a>
                 </span>
 
@@ -1093,148 +1435,6 @@
         
           
             <p>adasdf as<br>adasf<br>高级知识</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/24/firt-wenzhang/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Keem Wang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="KEEM--BLOG">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/24/firt-wenzhang/" itemprop="url">java教程的第一篇文章</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-24T16:10:59+08:00">
-                2018-11-24
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA基础知识/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA基础知识</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>以一篇实验田<br>双打<br>222222<br>000000</p>
 
           
         
@@ -1444,7 +1644,7 @@
               
                 <a href="/archives">
               
-                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-count">9</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1455,7 +1655,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-count">5</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
