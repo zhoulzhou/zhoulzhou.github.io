@@ -3,7 +3,7 @@ title: java静态变量生命周期（类的生命周期）
 date: 2018-11-26 19:53:49
 tags:
 categories:
-- JAVA基础知识
+- JAVA
 ---
 #### Static：
 
