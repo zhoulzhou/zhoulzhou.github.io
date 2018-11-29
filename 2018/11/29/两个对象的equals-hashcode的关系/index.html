@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="HashSet和HashMap一直都是JDK中最常用的两个类，HashSet要求不能存储相同的对象，HashMap要求不能存储相同的键。那么Java运行时环境是如何判断HashSet中相同对象、HashMap中相同键的呢？当存储了“相同的东西”之后Java运行时环境又将如何来维护呢？  在研究这个问题之前，首先说明一下JDK对equals(Object obj)和hashcode()这两个方法的定">
+<meta property="og:type" content="article">
+<meta property="og:title" content="两个对象的equals hashcode的关系">
+<meta property="og:url" content="http://yoursite.com/2018/11/29/两个对象的equals-hashcode的关系/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="HashSet和HashMap一直都是JDK中最常用的两个类，HashSet要求不能存储相同的对象，HashMap要求不能存储相同的键。那么Java运行时环境是如何判断HashSet中相同对象、HashMap中相同键的呢？当存储了“相同的东西”之后Java运行时环境又将如何来维护呢？  在研究这个问题之前，首先说明一下JDK对equals(Object obj)和hashcode()这两个方法的定">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-11-29T12:33:42.678Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="两个对象的equals hashcode的关系">
+<meta name="twitter:description" content="HashSet和HashMap一直都是JDK中最常用的两个类，HashSet要求不能存储相同的对象，HashMap要求不能存储相同的键。那么Java运行时环境是如何判断HashSet中相同对象、HashMap中相同键的呢？当存储了“相同的东西”之后Java运行时环境又将如何来维护呢？  在研究这个问题之前，首先说明一下JDK对equals(Object obj)和hashcode()这两个方法的定">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/11/29/两个对象的equals-hashcode的关系/">
+
+
+
+
+
+  <title>两个对象的equals hashcode的关系 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/29/两个对象的equals-hashcode的关系/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">两个对象的equals hashcode的关系</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-29T14:58:59+08:00">
+                2018-11-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/JAVA/" itemprop="url" rel="index">
+                    <span itemprop="name">JAVA</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>HashSet和HashMap一直都是JDK中最常用的两个类，<strong>HashSet要求不能存储相同的对象，HashMap要求不能存储相同的键。</strong><br>那么Java运行时环境是如何判断HashSet中相同对象、HashMap中相同键的呢？当存储了“相同的东西”之后Java运行时环境又将如何来维护呢？ </p>
+<p>在研究这个问题之前，首先说明一下JDK对equals(Object obj)和hashcode()这两个方法的定义和规范：<br><strong>在Java中任何一个对象都具备equals(Object obj)和hashcode()这两个方法，因为他们是在Object类中定义的。<br>equals(Object obj)方法用来判断两个对象是否“相同”，如果“相同”则返回true，否则返回false。<br>hashcode()方法返回一个int数，在Object类中的默认实现是“将该对象的内部地址转换成一个整数返回”。</strong><br>接下来有两个个关于这两个方法的重要规范(我只是抽取了最重要的两个,其实不止两个)： </p>
+<h4 id="规范1："><a href="#规范1：" class="headerlink" title="规范1："></a>规范1：</h4><p><strong>若重写equals(Object obj)方法，有必要重写hashcode()方法，确保通过equals(Object obj)方法判断结果为true的两个对象具备相等的hashcode()返回值。</strong><br>说得简单点就是：<strong>“如果两个对象相同，那么他们的hashcode应该相等”。</strong>不过请注意：这个只是规范，如果你非要写一个类让equals(Object obj)返回true而hashcode()返回两个不相等的值，编译和运行都是不会报错的。不过这样违反了Java规范，程序也就埋下了BUG。 </p>
+<h4 id="规范2："><a href="#规范2：" class="headerlink" title="规范2："></a>规范2：</h4><p><strong>如果equals(Object obj)返回false，即两个对象“不相同”，并不要求对这两个对象调用hashcode()方法得到两个不相同的数。</strong><br>说的简单点就是：<strong>“如果两个对象不相同，他们的hashcode可能相同”。 </strong><br><strong>根据这两个规范，可以得到如下推论：<br>1、如果两个对象equals，Java运行时环境会认为他们的hashcode一定相等。<br>2、如果两个对象不equals，他们的hashcode有可能相等。<br>3、如果两个对象hashcode相等，他们不一定equals。<br>4、如果两个对象hashcode不相等，他们一定不equals。 </strong></p>
+<p>这样我们就可以推断Java运行时环境是怎样判断HashSet和HastMap中的两个对象相同或不同了。<br>我的推断是：<strong>先判断hashcode是否相等，再判断是否equals。 </strong></p>
+<h4 id="测试程序"><a href="#测试程序" class="headerlink" title="测试程序"></a>测试程序</h4><p>首先我们定义一个类，重写hashCode()和equals(Object obj)方法 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">class A &#123;  </span><br><span class="line">  </span><br><span class="line">    @Override  </span><br><span class="line">    public boolean equals(Object obj) &#123;  </span><br><span class="line">        System.out.println(&quot;判断equals&quot;);  </span><br><span class="line">        return false;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    @Override  </span><br><span class="line">    public int hashCode() &#123;  </span><br><span class="line">        System.out.println(&quot;判断hashcode&quot;);  </span><br><span class="line">        return 1;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后写一个测试类，代码如下： </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public class Test &#123;    </span><br><span class="line">    </span><br><span class="line">    public static void main(String[] args) &#123;    </span><br><span class="line">        Map&lt;A,Object&gt; map = new HashMap&lt;A, Object&gt;();    </span><br><span class="line">        map.put(new A(), new Object());    </span><br><span class="line">        map.put(new A(), new Object());    </span><br><span class="line">            </span><br><span class="line">        System.out.println(map.size());    </span><br><span class="line">    &#125;    </span><br><span class="line">        </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行之后打印结果是： </p>
+<p>判断hashcode<br>判断hashcode<br>判断equals<br>2 </p>
+<p>可以看出，Java运行时环境会调用new A()这个对象的hashcode()方法。其中：<br>打印出的第一行“判断hashcode”是第一次map.put(new A(), new Object())所打印出的。<br>接下来的“判断hashcode”和“判断equals”是第二次map.put(new A(), new Object())所打印出来的。 </p>
+<p>那么为什么会是这样一个打印结果呢？我是这样分析的：<br>1、当第一次map.put(new A(), new Object())的时候，Java运行时环境就会判断这个map里面有没有和现在添加的 new A()对象相同的键，判断方法：调用new A()对象的hashcode()方法，判断map中当前是不是存在和new A()对象相同的HashCode。显然，这时候没有相同的，因为这个map中都还没有东西。所以这时候hashcode不相等，则没有必要再调用 equals(Object obj)方法了。参见推论4（如果两个对象hashcode不相等，他们一定不equals）<br>2、当第二次map.put(new A(), new Object())的时候，Java运行时环境再次判断，这时候发现了map中有两个相同的hashcode（因为我重写了A类的hashcode()方 法永远都返回1），所以有必要调用equals(Object obj)方法进行判断了。参见推论3（如果两个对象hashcode相等，他们不一定equals），然后发现两个对象不equals（因为我重写了equals(Object obj)方法，永远都返回false）。<br>3、这时候判断结束，判断结果：两次存入的对象不是相同的对象。所以最后打印map的长度的时候显示结果是：2。 </p>
+<p>改写程序如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">class A &#123;  </span><br><span class="line">  </span><br><span class="line">    @Override  </span><br><span class="line">    public boolean equals(Object obj) &#123;  </span><br><span class="line">        System.out.println(&quot;判断equals&quot;);  </span><br><span class="line">        return true;  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    @Override  </span><br><span class="line">    public int hashCode() &#123;  </span><br><span class="line">        System.out.println(&quot;判断hashcode&quot;);  </span><br><span class="line">        return 1;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">public class Test &#123;  </span><br><span class="line">  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Map&lt;A,Object&gt; map = new HashMap&lt;A, Object&gt;();  </span><br><span class="line">        map.put(new A(), new Object());  </span><br><span class="line">        map.put(new A(), new Object());  </span><br><span class="line">          </span><br><span class="line">        System.out.println(map.size());  </span><br><span class="line">    &#125;  </span><br><span class="line">      </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行之后打印结果是： </p>
+<p>判断hashcode<br>判断hashcode<br>判断equals<br>1 </p>
+<p>显然这时候map的长度已经变成1了，因为Java运行时环境认为存入了两个相同的对象。原因可根据上述分析方式进行分析。 </p>
+<p>以上分析的是HashMap，其实HashSet的底层本身就是通过HashMap来实现的，所以他的判断原理和HashMap是一样的，也是先判断hashcode再判断equals。 </p>
+<p>所以：写程序的时候应尽可能的按规范来，不然在不知不觉中就埋下了bug！  </p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/29/HashMap实现原理及源码分析/" rel="next" title="HashMap实现原理及源码分析">
+                <i class="fa fa-chevron-left"></i> HashMap实现原理及源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/11/29/JAVA对象的引用及赋值/" rel="prev" title="JAVA对象的引用及赋值">
+                JAVA对象的引用及赋值 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#规范1："><span class="nav-number">1.</span> <span class="nav-text">规范1：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#规范2："><span class="nav-number">2.</span> <span class="nav-text">规范2：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#测试程序"><span class="nav-number">3.</span> <span class="nav-text">测试程序</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
