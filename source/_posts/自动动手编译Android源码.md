@@ -13,15 +13,15 @@ git config –global user.email “test@test.com”
 git config –global user.name “test”
 ```
 
-####简要说明
+#### 简要说明
 android源码编译的四个流程:1.源码下载;2.构建编译环境;3.编译源码;4运行.下文也将按照该流程讲述.
 
-####源码下载
+#### 源码下载
 由于某墙的原因,这里我们采用国内的镜像源进行下载.
 目前,可用的镜像源一般是科大和清华的,具体使用差不多,这里我选择清华大学镜像进行说明.(参考:清华源)
 https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/
 
-####repo工具下载及安装
+#### repo工具下载及安装
 通过执行以下命令实现repo工具的下载和安装
 
 ```
@@ -33,7 +33,7 @@ chmod a+x ~/bin/repo
 
 总结一下:repo就是这么一种工具,由一系列python脚本组成,通过调用Git命令实现对AOSP项目的管理.
 
-####建立源码文件夹
+#### 建立源码文件夹
 熟悉Git的同学都应该知道,我们需要为项目在本地创建对应的仓库.同样,这里为了方便对代码进行管理,我们为其创建一个文件夹.这里我在当前用户目录下创建了source文件夹,后面所有的下载的源码和编译出的产物也都放在这里,命令如下:
 
 ```
@@ -41,7 +41,7 @@ mkdir source
 cd source
 ```
 
-####初始化仓库
+#### 初始化仓库
 我们将上面的source文件夹作为仓库,现在需要来初始化这个仓库了.通过执行初始化仓库命令可以获取AOSP项目master上最新的代码并初始化该仓库,命令如下:
 
 ```
@@ -61,7 +61,7 @@ REPO_URL = 'https://gerrit-google.tuna.tsinghua.edu.cn/git-repo'
 repo init -u https://aosp.tuna.tsinghua.edu.cn/platform/manifest -b android-4.0.1_r1
 ```
 
-####同步源码到本地
+#### 同步源码到本地
 初始化仓库之后,就可以开始正式同步代码到本地了,命令如下:
 
 ```
@@ -72,7 +72,7 @@ repo sync
 
 (提示:一定要确定代码完全同步了,不然在下面编译过程出现的错误会让你痛不欲生,不确定的童鞋可以多用repo sync同步几次)
 
-####构建编译环境
+#### 构建编译环境
 源码下载完成后,就可以构建编译环境了:
 我现在在Ubuntu 16.04下编译AOSP主线代码,因此需要安装OpenJDK 8,执行命令如下:
 
@@ -95,7 +95,7 @@ sudo apt-get install libgl1-mesa-dev libxml2-utils xsltproc unzip m4
 sudo apt-get install lib32z-dev ccache
 ```
 
-####初始化编译环境
+#### 初始化编译环境
 确保上述过程完成后,接下来我们需要初始化编译环境,命令如下:
 
 ```
@@ -109,10 +109,10 @@ source build/envsetup.sh
 不难发现该命令只是引入了其他执行脚本,至于这些脚本做什么,目前不在本文中细说.
 该命令执行成功后,我们会得到了一些有用的命令,比如最下面要用到的lunch命令.
 
-####编译源码
+#### 编译源码
 初始化编译环境之后,就进入源码编译阶段.这个阶段又包括两个阶段:选择编译目标和执行编译.
 
-####选择编译目标
+#### 选择编译目标
 通过lunch指令设置编译目标,所谓的编译目标就是生成的镜像要运行在什么样的设备上.这里我们设置的编译目标是aosp_arm64-eng,因此执行指令:
 
 ```
@@ -150,7 +150,7 @@ BUILD TYPE则指的是编译类型,通常有三种:
 来举个例子:你没有Nexus设备,只想编译完后运行看看,那么就可以选择aosp_arm-eng.
 (我在ubuntu 16.04(64位)中编译完成后启动虚拟机时,卡在黑屏,尝试编译aosp_arm64-eng解决.因此,这里我使用了aosp_arm64-eng)
 
-####开始编译
+#### 开始编译
 通过make指令进行代码编译,该指令通过-j参数来设置参与编译的线程数量,以提高编译速度.比如这里我们设置8个线程同时编译:
 
 ```
@@ -162,7 +162,7 @@ make  -j16 2>&1 | tee buildlog-userdebug.txt
 
 如果一切顺利的化,在几个小时之后,便可以编译完成.看到### make completed successfully (01:18:45(hh:mm:ss)) ###表示你编译成功了.
 
-####运行模拟器
+#### 运行模拟器
 在编译完成之后,就可以通过以下命令运行Android虚拟机了,命令如下:
 
 ```
@@ -187,7 +187,7 @@ ramdisk.img
 上面我在使用lunch命令时选择的是aosp_arm64-eng,因此linux默认使用的/source/prebuilds/qemu-kernel/arm64/kernel-qemu下的kernel-qemu,而其他文件则是使用的source/out/target/product/generic64目录下的system.img,userdata.img和ramdisk.img.
 当然,emulator指令允许你通过参数制定使用不同的文件,具体用法可以通过emulator --help查看
 
-####模块编译
+#### 模块编译
 除了通过make命令编译可以整个android源码外,Google也为我们提供了相应的命令来支持单独模块的编译.
 
 编译环境初始化(即执行source build/envsetup.sh)之后,我们可以得到一些有用的指令,除了上边用到的lunch,还有以下:
@@ -210,13 +210,13 @@ mmm packages/apps/Launcher2/
 ```
 
 稍等一会之后,如果提示:
-### make completed success fully ###
+###make completed success fully###
 即表示编译完成,此时在out/target/product/gereric/system/app就可以看到编译的Launcher2.apk文件了.
 
-####重新打包系统镜像
+#### 重新打包系统镜像
 编译好指定模块后,如果我们想要将该模块对应的apk集成到系统镜像中,需要借助make snod指令重新打包系统镜像,这样我们新生成的system.img中就包含了刚才编译的Launcher2模块了.重启模拟器之后生效.
 
-####单独安装模块
+#### 单独安装模块
 我们在不断的修改某些模块,总不能每次编译完成后都要重新打包system.img,然后重启手机吧?有没有什么简单的方法呢?
 在编译完后,借助adb install命令直接将生成的apk文件安装到设备上即可,相比使用make snod,会节省很多事件.
 
@@ -227,5 +227,5 @@ Android系统自带的apk文件都在out/target/product/generic/system/apk目录
 动态链接库放在out/target/product/generic/system/lib目录下;
 硬件抽象层文件都放在out/targer/product/generic/system/lib/hw目录下.
 
-####SDK编译
+#### SDK编译
 如果你需要自己编译SDK使用,很简单,只需要执行命令make sdk即可.
