@@ -2,15 +2,27 @@
 
 
 
+
+
+
+
+
+
+
+
+
   
 
 
-<html class="theme-next gemini use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-CN">
 <head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
+
+
+
 
 
 
@@ -38,10 +50,6 @@
 
 
 
-  
-  
-  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
-
 
 
 
@@ -50,49 +58,25 @@
 
 <link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
 
-<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
 
 
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
 
 
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
 
 
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
 
 
-  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
-
-
-
-
-
-  <meta name="keywords" content="Hexo, NexT">
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
 
 
 
 
 
 
-
-
-
-
-<meta name="description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
-<meta property="og:type" content="article">
-<meta property="og:title" content="超级英雄消亡史">
-<meta property="og:url" content="http://yoursite.com/2018/11/25/超级英雄消亡史/index.html">
-<meta property="og:site_name" content="KEEM--BLOG">
-<meta property="og:description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
-<meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg">
-<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553426873.jpg">
-<meta property="og:updated_time" content="2018-11-25T01:10:17.021Z">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="超级英雄消亡史">
-<meta name="twitter:description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
-<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg">
 
 
 
@@ -101,15 +85,13 @@
   var CONFIG = {
     root: '/',
     scheme: 'Gemini',
-    version: '5.1.4',
+    version: '6.5.0',
     sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
-    fancybox: true,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
     tabs: true,
     motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
-    duoshuo: {
-      userId: '0',
-      author: '博主'
-    },
     algolia: {
       applicationID: '',
       apiKey: '',
@@ -121,12 +103,40 @@
 </script>
 
 
+  
+
+
+
+
+  <meta name="description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="超级英雄消亡史">
+<meta property="og:url" content="http://yoursite.com/2018/11/25/超级英雄消亡史/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553426873.jpg">
+<meta property="og:updated_time" content="2018-11-25T01:10:17.021Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="超级英雄消亡史">
+<meta name="twitter:description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg">
+
+
+
+
+
 
   <link rel="canonical" href="http://yoursite.com/2018/11/25/超级英雄消亡史/">
 
 
 
-
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
 
   <title>超级英雄消亡史 | KEEM--BLOG</title>
   
@@ -138,9 +148,39 @@
 
 
 
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
 </head>
 
-<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   
   
@@ -162,13 +202,11 @@
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-      
-        <p class="site-subtitle"></p>
-      
+    
   </div>
 
   <div class="site-nav-toggle">
-    <button>
+    <button aria-label="切换导航栏">
       <span class="btn-bar"></span>
       <span class="btn-bar"></span>
       <span class="btn-bar"></span>
@@ -176,25 +214,69 @@
   </div>
 </div>
 
-<nav class="site-nav">
-  
 
+
+<nav class="site-nav">
   
     <ul id="menu" class="menu">
       
         
-        <li class="menu-item menu-item-categories">
-          <a href="/categories/" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
-            
-            分类
-          </a>
-        </li>
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
       
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
 
       
+      
     </ul>
+  
+
   
 
   
@@ -202,12 +284,23 @@
 
 
 
- </div>
+  
+
+
+
+</div>
     </header>
+
+    
+
 
     <main id="main" class="main">
       <div class="main-inner">
         <div class="content-wrap">
+          
+            
+
+          
           <div id="content" class="content">
             
 
@@ -220,6 +313,8 @@
   
   
 
+  
+
   <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
   
   
@@ -229,7 +324,7 @@
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Keem Wang">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
       <meta itemprop="image" content="/images/avatar.gif">
     </span>
 
@@ -242,11 +337,19 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">超级英雄消亡史</h1>
+          <h1 class="post-title" itemprop="name headline">超级英雄消亡史
+              
+            
+          </h1>
         
 
         <div class="post-meta">
           <span class="post-time">
+
+            
+            
+            
+
             
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
@@ -254,13 +357,18 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-25T08:50:47+08:00">
-                2018-11-25
-              </time>
+
+              
+                
+              
+
+              <time title="创建时间：2018-11-25 08:50:47 / 修改时间：09:10:17" itemprop="dateCreated datePublished" datetime="2018-11-25T08:50:47+08:00">2018-11-25</time>
             
 
             
+              
 
+              
             
           </span>
 
@@ -276,11 +384,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/如何思考/" itemprop="url" rel="index">
-                    <span itemprop="name">如何思考</span>
-                  </a>
-                </span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/如何思考/" itemprop="url" rel="index"><span itemprop="name">如何思考</span></a></span>
 
                 
                 
@@ -341,12 +445,18 @@
 
       
     </div>
+
+    
+
     
     
     
 
     
 
+    
+       
+    
     
 
     
@@ -390,17 +500,10 @@
   </article>
 
 
-
-    <div class="post-spread">
-      
-    </div>
   </div>
 
 
           </div>
-          
-
-
           
 
   
@@ -432,47 +535,59 @@
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
               <p class="site-author-name" itemprop="name">Keem Wang</p>
-              <p class="site-description motion-element" itemprop="description"></p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
           </div>
 
-          <nav class="site-state motion-element">
-
-            
-              <div class="site-state-item site-state-posts">
+          
+            <nav class="site-state motion-element">
               
-                <a href="/archives">
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">21</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
               
-                  <span class="site-state-item-count">21</span>
-                  <span class="site-state-item-name">日志</span>
-                </a>
-              </div>
-            
 
-            
               
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
               
-              <div class="site-state-item site-state-categories">
-                <a href="/categories/index.html">
-                  <span class="site-state-item-count">4</span>
-                  <span class="site-state-item-name">分类</span>
-                </a>
-              </div>
+
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
             
-
-            
-
-          </nav>
-
           
-
-          
-
-          
-          
-
-          
-          
-
           
 
         </div>
@@ -493,16 +608,18 @@
     <footer id="footer" class="footer">
       <div class="footer-inner">
         <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
-  <span class="with-love">
+  <span class="with-love" id="animate">
     <i class="fa fa-user"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">Keem Wang</span>
 
   
+
+  
 </div>
 
 
-  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
 
 
 
@@ -510,12 +627,13 @@
 
 
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
 
 
 
 
         
+
 
 
 
@@ -535,7 +653,10 @@
     
 
     
+	
+    
 
+    
   </div>
 
   
@@ -554,7 +675,11 @@
 
 
 
-  
+
+
+
+
+
 
 
 
@@ -574,16 +699,6 @@
 
   
   
-    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
-  
-
-  
-  
     <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
   
 
@@ -592,18 +707,13 @@
     <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
   
 
-  
-  
-    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-  
-
 
   
 
 
-  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
 
-  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
 
 
 
@@ -611,36 +721,22 @@
   
 
 
-  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
 
-  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
-
-
-
-  
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
 
 
 
   
-
-
-  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
 
 
 
   
 
 
-  
-
-
-
-
-	
-
-
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
 
 
 
@@ -648,11 +744,7 @@
 
 
 
-
-
   
-
-
 
 
 
@@ -691,6 +783,16 @@
 
 
   
+
+  
+
+  
+  
+
+  
+
+  
+
   
 
   
