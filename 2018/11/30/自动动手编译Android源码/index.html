@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="本文使用最新的Ubuntu 16.04,请首先确保自己已经安装了Git.没安装的同学可以通过以下命令进行安装: 123sudo apt-get install git git config –global user.email “test@test.com” git config –global user.name “test” 简要说明android源码编译的四个流程:1.源码下载;2.构建编译">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自动动手编译Android源码">
+<meta property="og:url" content="http://yoursite.com/2018/11/30/自动动手编译Android源码/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="本文使用最新的Ubuntu 16.04,请首先确保自己已经安装了Git.没安装的同学可以通过以下命令进行安装: 123sudo apt-get install git git config –global user.email “test@test.com” git config –global user.name “test” 简要说明android源码编译的四个流程:1.源码下载;2.构建编译">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian1.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian2.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian3.webp">
+<meta property="og:updated_time" content="2018-11-30T12:30:20.883Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="自动动手编译Android源码">
+<meta name="twitter:description" content="本文使用最新的Ubuntu 16.04,请首先确保自己已经安装了Git.没安装的同学可以通过以下命令进行安装: 123sudo apt-get install git git config –global user.email “test@test.com” git config –global user.name “test” 简要说明android源码编译的四个流程:1.源码下载;2.构建编译">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian1.webp">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/11/30/自动动手编译Android源码/">
+
+
+
+
+
+  <title>自动动手编译Android源码 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/30/自动动手编译Android源码/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">自动动手编译Android源码</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-30T15:03:28+08:00">
+                2018-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ANDROID/" itemprop="url" rel="index">
+                    <span itemprop="name">ANDROID</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文使用最新的Ubuntu 16.04,请首先确保自己已经安装了Git.没安装的同学可以通过以下命令进行安装:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install git </span><br><span class="line">git config –global user.email “test@test.com” </span><br><span class="line">git config –global user.name “test”</span><br></pre></td></tr></table></figure>
+<h4 id="简要说明"><a href="#简要说明" class="headerlink" title="简要说明"></a>简要说明</h4><p>android源码编译的四个流程:1.源码下载;2.构建编译环境;3.编译源码;4运行.下文也将按照该流程讲述.</p>
+<h4 id="源码下载"><a href="#源码下载" class="headerlink" title="源码下载"></a>源码下载</h4><p>由于某墙的原因,这里我们采用国内的镜像源进行下载.<br>目前,可用的镜像源一般是科大和清华的,具体使用差不多,这里我选择清华大学镜像进行说明.(参考:清华源)<br><a href="https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/" target="_blank" rel="noopener">https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/</a></p>
+<h4 id="repo工具下载及安装"><a href="#repo工具下载及安装" class="headerlink" title="repo工具下载及安装"></a>repo工具下载及安装</h4><p>通过执行以下命令实现repo工具的下载和安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir ~/bin</span><br><span class="line">PATH=~/bin:$PATH</span><br><span class="line">curl https://storage.googleapis.com/git-repo-downloads/repo &gt; ~/bin/repo</span><br><span class="line">chmod a+x ~/bin/repo</span><br></pre></td></tr></table></figure>
+<p>总结一下:repo就是这么一种工具,由一系列python脚本组成,通过调用Git命令实现对AOSP项目的管理.</p>
+<h4 id="建立源码文件夹"><a href="#建立源码文件夹" class="headerlink" title="建立源码文件夹"></a>建立源码文件夹</h4><p>熟悉Git的同学都应该知道,我们需要为项目在本地创建对应的仓库.同样,这里为了方便对代码进行管理,我们为其创建一个文件夹.这里我在当前用户目录下创建了source文件夹,后面所有的下载的源码和编译出的产物也都放在这里,命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir source</span><br><span class="line">cd source</span><br></pre></td></tr></table></figure>
+<h4 id="初始化仓库"><a href="#初始化仓库" class="headerlink" title="初始化仓库"></a>初始化仓库</h4><p>我们将上面的source文件夹作为仓库,现在需要来初始化这个仓库了.通过执行初始化仓库命令可以获取AOSP项目master上最新的代码并初始化该仓库,命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">repo init -u https://aosp.tuna.tsinghua.edu.cn/platform/manifest</span><br></pre></td></tr></table></figure>
+<p>如果执行该命令的过程中,如果提示无法连接到 gerrit.googlesource.com，那么我们只需要编辑 ~/bin/repo文件，找到REPO_URL这一行,然后将其内容修改为:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">REPO_URL = &apos;https://gerrit-google.tuna.tsinghua.edu.cn/git-repo&apos;</span><br></pre></td></tr></table></figure>
+<p>然后重新执行上述命令即可.<br><strong>补充说明</strong><br>不带参数的manifest命令用于获取master上最新的代码,但是可以通过-b参数指定获取某个特定的android版本,比如我们想要获取android-4.0.1_r1分支,那么命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">repo init -u https://aosp.tuna.tsinghua.edu.cn/platform/manifest -b android-4.0.1_r1</span><br></pre></td></tr></table></figure>
+<h4 id="同步源码到本地"><a href="#同步源码到本地" class="headerlink" title="同步源码到本地"></a>同步源码到本地</h4><p>初始化仓库之后,就可以开始正式同步代码到本地了,命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">repo sync</span><br></pre></td></tr></table></figure>
+<p>以后如果需要同步最新的远程代码到本地,也只需要执行该命令即可.在同步过程中,如果因为网络原因中断,使用该命令继续同步即可.不出意外,5个小时便可以将全部源码同步到本地.所以呢,这个过程可以放在晚上睡觉期间完成.</p>
+<p>(提示:一定要确定代码完全同步了,不然在下面编译过程出现的错误会让你痛不欲生,不确定的童鞋可以多用repo sync同步几次)</p>
+<h4 id="构建编译环境"><a href="#构建编译环境" class="headerlink" title="构建编译环境"></a>构建编译环境</h4><p>源码下载完成后,就可以构建编译环境了:<br>我现在在Ubuntu 16.04下编译AOSP主线代码,因此需要安装OpenJDK 8,执行命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install openjdk-8-jdk</span><br></pre></td></tr></table></figure>
+<p>下面是Ubuntu16.04中的依赖设置:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install libx11-dev:i386 libreadline6-dev:i386 libgl1-mesa-dev g++-multilib </span><br><span class="line">sudo apt-get install -y git flex bison gperf build-essential libncurses5-dev:i386 </span><br><span class="line">sudo apt-get install tofrodos python-markdown libxml2-utils xsltproc zlib1g-dev:i386 </span><br><span class="line">sudo apt-get install dpkg-dev libsdl1.2-dev libesd0-dev</span><br><span class="line">sudo apt-get install git-core gnupg flex bison gperf build-essential  </span><br><span class="line">sudo apt-get install zip curl zlib1g-dev gcc-multilib g++-multilib </span><br><span class="line">sudo apt-get install libc6-dev-i386 </span><br><span class="line">sudo apt-get install lib32ncurses5-dev x11proto-core-dev libx11-dev </span><br><span class="line">sudo apt-get install libgl1-mesa-dev libxml2-utils xsltproc unzip m4</span><br><span class="line">sudo apt-get install lib32z-dev ccache</span><br></pre></td></tr></table></figure>
+<h4 id="初始化编译环境"><a href="#初始化编译环境" class="headerlink" title="初始化编译环境"></a>初始化编译环境</h4><p>确保上述过程完成后,接下来我们需要初始化编译环境,命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh</span><br></pre></td></tr></table></figure>
+<p>执行该命令结果如下:</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian1.webp" alt="avatar"></p>
+<p>不难发现该命令只是引入了其他执行脚本,至于这些脚本做什么,目前不在本文中细说.<br>该命令执行成功后,我们会得到了一些有用的命令,比如最下面要用到的lunch命令.</p>
+<h4 id="编译源码"><a href="#编译源码" class="headerlink" title="编译源码"></a>编译源码</h4><p>初始化编译环境之后,就进入源码编译阶段.这个阶段又包括两个阶段:选择编译目标和执行编译.</p>
+<h4 id="选择编译目标"><a href="#选择编译目标" class="headerlink" title="选择编译目标"></a>选择编译目标</h4><p>通过lunch指令设置编译目标,所谓的编译目标就是生成的镜像要运行在什么样的设备上.这里我们设置的编译目标是aosp_arm64-eng,因此执行指令:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lunch aosp_arm64-eng</span><br></pre></td></tr></table></figure>
+<p><strong>编译目标格式说明</strong><br>编译目标的格式:BUILD-BUILDTYPE,比如上面的aosp_arm-eng的BUILD是aosp_arm,BUILDTYPE是eng.</p>
+<p><strong>什么是BUILD</strong><br>BUILD指的是特定功能的组合的特定名称,即表示编译出的镜像可以运行在什么环境.其中,aosp(Android Open Source Project)代表Android开源项目;arm表示系统是运行在arm架构的处理器上,arm64则是指64位arm架构;处理器,x86则表示x86架构的处理器;此外,还有一些单词代表了特定的Nexus设备,下面是常用的设备代码和编译目标,更多参考官方文档<br>|受型号|设备代码|编译目标|<br>|—|—-|—|<br>|Nexus 6P|angler|aosp_angler-userdebug|<br>|Nexus 5X|bullhead|aosp_bullhead-userdebug|<br>|Nexus 6|shamu|aosp_shamu-userdebug|<br>|Nexus 5|hammerhead|aosp_hammerhead-userdebug|</p>
+<p>提示:如果你没有Nexus设备,那么通常选择arm或者x86即可</p>
+<p><strong>什么是BUILDTYPE</strong></p>
+<p>BUILD TYPE则指的是编译类型,通常有三种:<br>-user:代表这是编译出的系统镜像是可以用来正式发布到市场的版本,其权限是被限制的(如,没有root权限,不鞥年dedug等)<br>-userdebug:在user版本的基础上开放了root权限和debug权限.<br>-eng:代表engineer,也就是所谓的开发工程师的版本,拥有最大的权限(root等),此外还附带了许多debug工具</p>
+<p>了解编译目标的组成之后,我们就可以根据自己目前的情况选择了.那不知道编译目标怎么办?<br>我们只需要执行不带参数的lunch指令,稍后,控制台会列出所有的编译目标,如下:</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian2.webp" alt="avatar"></p>
+<p>接着我们只需要输入相应的数字即可.</p>
+<p>来举个例子:你没有Nexus设备,只想编译完后运行看看,那么就可以选择aosp_arm-eng.<br>(我在ubuntu 16.04(64位)中编译完成后启动虚拟机时,卡在黑屏,尝试编译aosp_arm64-eng解决.因此,这里我使用了aosp_arm64-eng)</p>
+<h4 id="开始编译"><a href="#开始编译" class="headerlink" title="开始编译"></a>开始编译</h4><p>通过make指令进行代码编译,该指令通过-j参数来设置参与编译的线程数量,以提高编译速度.比如这里我们设置8个线程同时编译:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make  -j16 2&gt;&amp;1 | tee buildlog-userdebug.txt</span><br></pre></td></tr></table></figure>
+<p>需要注意的是,参与编译的线程并不是越多越好,通常是根据你机器cup的核心来确定:core*2,即当前cpu的核心的2倍.比如,我现在的笔记本是双核四线程的,因此根据公式,最快速的编译可以make -j8.<br>(通过cat /proc/cpuinfo查看相关cpu信息)</p>
+<p>如果一切顺利的化,在几个小时之后,便可以编译完成.看到### make completed successfully (01:18:45(hh:mm:ss)) ###表示你编译成功了.</p>
+<h4 id="运行模拟器"><a href="#运行模拟器" class="headerlink" title="运行模拟器"></a>运行模拟器</h4><p>在编译完成之后,就可以通过以下命令运行Android虚拟机了,命令如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh</span><br><span class="line">lunch(选择刚才你设置的目标版本,比如这里了我选择的是2)</span><br><span class="line">emulator</span><br></pre></td></tr></table></figure>
+<p>不出意外,在等待一会之后,你会看到运行界面:</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/bian3.webp" alt="avatar"></p>
+<p><strong>补充</strong><br>既然谈到了模拟器运行,这里我们顺便介绍模拟器运行所需要四个文件:<br>Linux Kernel<br>system.img<br>userdate.img<br>ramdisk.img</p>
+<p>如果你在使用lunch命令时选择的是aosp_arm-eng,那么在执行不带参数的emualtor命令时,Linux Kernel默认使用的是/source/prebuilds/qemu-kernel/arm/kernel-qemu目录下的kernel-qemu文件;而android镜像文件则是默认使用source/out/target/product/generic目录下的system.img,userdata.img和ramdisk.img,也就是我们刚刚编译出来的镜像文件.</p>
+<p>上面我在使用lunch命令时选择的是aosp_arm64-eng,因此linux默认使用的/source/prebuilds/qemu-kernel/arm64/kernel-qemu下的kernel-qemu,而其他文件则是使用的source/out/target/product/generic64目录下的system.img,userdata.img和ramdisk.img.<br>当然,emulator指令允许你通过参数制定使用不同的文件,具体用法可以通过emulator –help查看</p>
+<h4 id="模块编译"><a href="#模块编译" class="headerlink" title="模块编译"></a>模块编译</h4><p>除了通过make命令编译可以整个android源码外,Google也为我们提供了相应的命令来支持单独模块的编译.</p>
+<p>编译环境初始化(即执行source build/envsetup.sh)之后,我们可以得到一些有用的指令,除了上边用到的lunch,还有以下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">- croot: Changes directory to the top of the tree.</span><br><span class="line">  - m: Makes from the top of the tree.</span><br><span class="line">  - mm: Builds all of the modules in the current directory.</span><br><span class="line">  - mmm: Builds all of the modules in the supplied directories.</span><br><span class="line">  - cgrep: Greps on all local C/C++ files.</span><br><span class="line">  - jgrep: Greps on all local Java files.</span><br><span class="line">  - resgrep: Greps on all local res/*.xml files.</span><br><span class="line">  - godir: Go to the directory containing a file.</span><br></pre></td></tr></table></figure>
+<p>其中mmm指令就是用来编译指定目录.通常来说,每个目录只包含一个模块.比如这里我们要编译Launcher2模块,执行指令:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mmm packages/apps/Launcher2/</span><br></pre></td></tr></table></figure>
+<p>稍等一会之后,如果提示:</p>
+<p>###make completed success fully###<br>即表示编译完成,此时在out/target/product/gereric/system/app就可以看到编译的Launcher2.apk文件了.</p>
+<h4 id="重新打包系统镜像"><a href="#重新打包系统镜像" class="headerlink" title="重新打包系统镜像"></a>重新打包系统镜像</h4><p>编译好指定模块后,如果我们想要将该模块对应的apk集成到系统镜像中,需要借助make snod指令重新打包系统镜像,这样我们新生成的system.img中就包含了刚才编译的Launcher2模块了.重启模拟器之后生效.</p>
+<h4 id="单独安装模块"><a href="#单独安装模块" class="headerlink" title="单独安装模块"></a>单独安装模块</h4><p>我们在不断的修改某些模块,总不能每次编译完成后都要重新打包system.img,然后重启手机吧?有没有什么简单的方法呢?<br>在编译完后,借助adb install命令直接将生成的apk文件安装到设备上即可,相比使用make snod,会节省很多事件.</p>
+<p><strong>补充</strong><br>我们简单的来介绍out/target/product/generic/system目录下的常用目录:<br>Android系统自带的apk文件都在out/target/product/generic/system/apk目录下;<br>一些可执行文件(比如C编译的执行),放在out/target/product/generic/system/bin目录下;<br>动态链接库放在out/target/product/generic/system/lib目录下;<br>硬件抽象层文件都放在out/targer/product/generic/system/lib/hw目录下.</p>
+<h4 id="SDK编译"><a href="#SDK编译" class="headerlink" title="SDK编译"></a>SDK编译</h4><p>如果你需要自己编译SDK使用,很简单,只需要执行命令make sdk即可.</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/30/MAT查看bitmap的内存泄漏/" rel="next" title="MAT查看bitmap的内存泄漏">
+                <i class="fa fa-chevron-left"></i> MAT查看bitmap的内存泄漏
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/11/30/Gradle依赖详解/" rel="prev" title="Gradle依赖详解">
+                Gradle依赖详解 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#简要说明"><span class="nav-number">1.</span> <span class="nav-text">简要说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#源码下载"><span class="nav-number">2.</span> <span class="nav-text">源码下载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#repo工具下载及安装"><span class="nav-number">3.</span> <span class="nav-text">repo工具下载及安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#建立源码文件夹"><span class="nav-number">4.</span> <span class="nav-text">建立源码文件夹</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化仓库"><span class="nav-number">5.</span> <span class="nav-text">初始化仓库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#同步源码到本地"><span class="nav-number">6.</span> <span class="nav-text">同步源码到本地</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建编译环境"><span class="nav-number">7.</span> <span class="nav-text">构建编译环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#初始化编译环境"><span class="nav-number">8.</span> <span class="nav-text">初始化编译环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#编译源码"><span class="nav-number">9.</span> <span class="nav-text">编译源码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#选择编译目标"><span class="nav-number">10.</span> <span class="nav-text">选择编译目标</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#开始编译"><span class="nav-number">11.</span> <span class="nav-text">开始编译</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#运行模拟器"><span class="nav-number">12.</span> <span class="nav-text">运行模拟器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#模块编译"><span class="nav-number">13.</span> <span class="nav-text">模块编译</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重新打包系统镜像"><span class="nav-number">14.</span> <span class="nav-text">重新打包系统镜像</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#单独安装模块"><span class="nav-number">15.</span> <span class="nav-text">单独安装模块</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SDK编译"><span class="nav-number">16.</span> <span class="nav-text">SDK编译</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

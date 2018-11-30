@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="什么是内存泄露当一个对象已经不需要再使用了，本该被回收时，而有另外一个正在使用的对象持有它的引用从而导致它不能被回收，这导致本该被回收的对象不能被回收而停留在堆内存中，这就产生了内存泄漏。 内存泄露的常见场景非静态内部类，静态实例化 123456789101112131415161718192021222324/** * 自定义实现的Activity */public class MyActivi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内存泄漏的场景及检测">
+<meta property="og:url" content="http://yoursite.com/2018/11/30/内存泄漏的场景及检测/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="什么是内存泄露当一个对象已经不需要再使用了，本该被回收时，而有另外一个正在使用的对象持有它的引用从而导致它不能被回收，这导致本该被回收的对象不能被回收而停留在堆内存中，这就产生了内存泄漏。 内存泄露的常见场景非静态内部类，静态实例化 123456789101112131415161718192021222324/** * 自定义实现的Activity */public class MyActivi">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei1.png">
+<meta property="og:updated_time" content="2018-11-30T12:30:20.883Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="内存泄漏的场景及检测">
+<meta name="twitter:description" content="什么是内存泄露当一个对象已经不需要再使用了，本该被回收时，而有另外一个正在使用的对象持有它的引用从而导致它不能被回收，这导致本该被回收的对象不能被回收而停留在堆内存中，这就产生了内存泄漏。 内存泄露的常见场景非静态内部类，静态实例化 123456789101112131415161718192021222324/** * 自定义实现的Activity */public class MyActivi">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/11/30/内存泄漏的场景及检测/">
+
+
+
+
+
+  <title>内存泄漏的场景及检测 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/30/内存泄漏的场景及检测/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">内存泄漏的场景及检测</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-30T09:27:15+08:00">
+                2018-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/ANDROID/" itemprop="url" rel="index">
+                    <span itemprop="name">ANDROID</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="什么是内存泄露"><a href="#什么是内存泄露" class="headerlink" title="什么是内存泄露"></a>什么是内存泄露</h4><p>当一个对象已经不需要再使用了，本该被回收时，而有另外一个正在使用的对象持有它的引用从而导致它不能被回收，这导致本该被回收的对象不能被回收而停留在堆内存中，这就产生了内存泄漏。</p>
+<h4 id="内存泄露的常见场景"><a href="#内存泄露的常见场景" class="headerlink" title="内存泄露的常见场景"></a>内存泄露的常见场景</h4><p><strong>非静态内部类，静态实例化</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 自定义实现的Activity</span><br><span class="line"> */</span><br><span class="line">public class MyActivity extends AppCompatActivity &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 静态成员变量</span><br><span class="line">     */</span><br><span class="line">    public static InnerClass innerClass = null;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_my);</span><br><span class="line"></span><br><span class="line">        innerClass = new InnerClass();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    class InnerClass &#123;</span><br><span class="line"></span><br><span class="line">        public void doSomeThing() &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里内部类InnerClass隐式的持有外部类MyActivity的引用，而在MyActivity的onCreate方法中调用了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">innerClass = new InnerClass();</span><br></pre></td></tr></table></figure>
+<p>这样innerClass就会在MyActivity创建的时候是有了他的引用，而innerClass是静态类型的不会被垃圾回收，MyActivity在执行onDestory方法的时候由于被innerClass持有了引用而无法被回收，所以这样MyActivity就总是被innerClass持有而无法回收造成内存泄露。</p>
+<p><strong>不正确的使用Context对象造成内存泄露</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 自定义单例对象</span><br><span class="line"> */</span><br><span class="line">public class Single &#123;</span><br><span class="line">    private static Single instance;</span><br><span class="line">    private Context context;</span><br><span class="line">    private Object obj = new Object();</span><br><span class="line"></span><br><span class="line">    private Single(Context context) &#123;</span><br><span class="line">        this.context = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 初始化获取单例对象</span><br><span class="line">     */</span><br><span class="line">    public static Single getInstance(Context context) &#123;</span><br><span class="line">        if (instance == null) &#123;</span><br><span class="line">            synchronized(obj) &#123;</span><br><span class="line">                if (instance == null) &#123;</span><br><span class="line">                    instance = new Single(context);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return instance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们通过懒汉模式创建单例对象，并且在创建的时候需要传入一个Context对象，而这时候如果我们使用Activity、Service等Context对象，由于单例对象的生命周期与进程的生命周期相同，会造成我们传入的Activity、Service对象无法被回收，这时候就需要我们传入Application对象，或者在方法中使用Application对象，上面的代码可以改成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 自定义单例对象</span><br><span class="line"> */</span><br><span class="line">public class Single &#123;</span><br><span class="line">    private static Single instance;</span><br><span class="line">    private Context context;</span><br><span class="line">    private Object obj = new Object();</span><br><span class="line"></span><br><span class="line">    private Single(Context context) &#123;</span><br><span class="line">        this.context = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 初始化获取单例对象</span><br><span class="line">     */</span><br><span class="line">    public static Single getInstance(Context context) &#123;</span><br><span class="line">        if (instance == null) &#123;</span><br><span class="line">            synchronized(obj) &#123;</span><br><span class="line">                if (instance == null) &#123;</span><br><span class="line">                    instance = new Single(context.getApplication());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return instance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样就不会有内存泄露的问题了。</p>
+<p><strong>使用Handler异步消息通信</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 定义Handler成员变量</span><br><span class="line"> */</span><br><span class="line">Handler handler = new Handler() &#123;  </span><br><span class="line">        @Override  </span><br><span class="line">        public void handleMessage(Message msg) &#123;  </span><br><span class="line">            dosomething();  </span><br><span class="line"></span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+<p>但是这样也存在着一个隐藏的问题：在Activity中使用Handler创建匿名内部类会隐式的持有外部Activity对象的引用，当子线程使用Handler暂时无法完成异步任务时，handler对象无法销毁，同时由于隐式的持有activity对象的引用，造成activity对象以及相关的组件与资源文件同样无法销毁，造成内存泄露。<br>改为静态内部类，并软引用持有context.</p>
+<p><strong>使用资源文件结束之后未关闭</strong><br>在使用一些资源性对象比如(Cursor，File，Stream，ContentProvider等)往往都用了一些缓冲，我们在不使用的时候，应该及时关闭它们，以便它们的缓冲及时回收内存。它们的缓冲不仅存在于Java虚拟机内，还存在于Java虚拟机外。如果我们仅仅是把它的引用设置为null,而不关闭它们，往往会造成内存泄露。</p>
+<p>因为有些资源性对象，比如SQLiteCursor(在析构函数finalize(),如果我们没有关闭它，它自己会调close()关闭)，如果我们没有关闭它，系统在回收它时也会关闭它，但是这样的效率太低了。因此对于资源性对象在不使用的时候，应该立即调用它的close()函数，将其关闭掉，然后再置为null.在我们的程序退出时一定要确保我们的资源性对象已经关闭。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 初始化Cursor对象</span><br><span class="line"> */</span><br><span class="line">Cursor cursor = getContentResolver().query(uri...); </span><br><span class="line">if (cursor.moveToNext()) &#123; </span><br><span class="line">    /**</span><br><span class="line">     * 执行自设你的业务代码</span><br><span class="line">     */ </span><br><span class="line">     doSomeThing();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这时候我们应当在doSomeThing之后执行cursor的close方法，关闭资源对象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 初始化Cursor对象</span><br><span class="line"> */</span><br><span class="line">Cursor cursor = getContentResolver().query(uri...); </span><br><span class="line">if (cursor.moveToNext()) &#123; </span><br><span class="line">    /**</span><br><span class="line">     * 执行自设你的业务代码</span><br><span class="line">     */ </span><br><span class="line">     doSomeThing();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (cursor != null) &#123;</span><br><span class="line">    cursor.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Bitmap使用不当</strong><br>bitmap对象使用的内存较大，当我们不再使用Bitmap对象的时候一定要执行recycler方法，这里需要指出的是当我们在代码中执行recycler方法，Bitmap并不会被立即释放掉，其只是通知虚拟机该Bitmap可以被recycler了。</p>
+<p>当然了现在项目中使用的一些图片库已经帮我们对图片资源做了很好的优化缓存工作，是我们省去了这些操作。</p>
+<p><strong>一些框架使用了注册方法而未反注册</strong><br>比如我们时常使用的事件总线框架-EventBus，当我们需要注册某个Activity时需要在onCreate中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EventBus.getDefault().register(this);</span><br></pre></td></tr></table></figure>
+<p>然后这样之后就没有其他操作的话就会出现内存泄露的情况，因为EventBus对象会是有该Activity的引用，即使执行了改Activity的onDestory方法，由于被EventBus隐式的持有了该对象的引用，造成其无法被回收，这时候我们需要在onDestory方法中执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EventBus.getDefault().unregister(this);</span><br></pre></td></tr></table></figure>
+<p><strong>集合中的一些方法的错误使用</strong><br>（1）比如List列表静态化，只是添加元素而不再使用时不清楚元素；<br>（2）map对象只是put，而无remove操作等等；</p>
+<h4 id="关于内存泄露检测的开源方案"><a href="#关于内存泄露检测的开源方案" class="headerlink" title="关于内存泄露检测的开源方案"></a>关于内存泄露检测的开源方案</h4><p>LeakCanary </p>
+<h4 id="关于屏蔽内存泄露的建议"><a href="#关于屏蔽内存泄露的建议" class="headerlink" title="关于屏蔽内存泄露的建议"></a>关于屏蔽内存泄露的建议</h4><p>1、正确的保证内存对象的生命周期，就是尽量保证内存对象在其生命周期内创建于结束，比如Android中的“上帝对象Context”，要保证不同的场景下使用不同的Context对象，下面是一张Context对象的使用场景图： </p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei1.png" alt="avatar"></p>
+<p>2、对资源对象的使用要在使用完成之后保证调用其资源的关闭方法，而非仅仅是对资源引用的关闭操作；</p>
+<p>3、静态化资源对象其生命周期就会变成与进程的生命周期相同，在使用静态化时一定要考虑清楚该对象静态化是否存在内存泄露的可能；</p>
+<p>4、对Android开发中常见的内存泄露场景要做到了然于胸，了解一些Android中常见的内存泄露检测方法；</p>
+<h4 id="分析内存的技巧"><a href="#分析内存的技巧" class="headerlink" title="分析内存的技巧"></a>分析内存的技巧</h4><p>您应对应用代码施加压力并尝试强制内存泄漏。 在应用中引发内存泄漏的一种方式是，先让其运行一段时间，然后再检查堆。 泄漏在堆中可能逐渐汇聚到分配顶部。 不过，泄漏越小，您越需要运行更长时间的应用才能看到泄漏。<br><strong>您还可以通过以下方式之一触发内存泄漏：</strong></p>
+<p>1、将设备从纵向旋转为横向，然后在不同的 Activity 状态下反复操作多次。 旋转设备经常会导致应用泄漏 Activity、Context 或 View 对象，因为系统会重新创建 Activity，而如果您的应用在其他地方保持对这些对象之一的引用，系统将无法对其进行垃圾回收。<br>2、处于不同的 Activity 状态时，在您的应用与另一个应用之间切换（导航到主屏幕，然后返回到您的应用）。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>关于内存泄露其实主要记住一个原则就好：确保对象能够在正确的时机被回收掉。然后我们根据具体内存泄露的场景具体解决就好了。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/29/HEXO之next主题首页不显示全文只显示预览/" rel="next" title="HEXO之next主题首页不显示全文只显示预览">
+                <i class="fa fa-chevron-left"></i> HEXO之next主题首页不显示全文只显示预览
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/11/30/使用MAT比较多个hprof文件/" rel="prev" title="使用MAT比较多个hprof文件">
+                使用MAT比较多个hprof文件 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#什么是内存泄露"><span class="nav-number">1.</span> <span class="nav-text">什么是内存泄露</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存泄露的常见场景"><span class="nav-number">2.</span> <span class="nav-text">内存泄露的常见场景</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关于内存泄露检测的开源方案"><span class="nav-number">3.</span> <span class="nav-text">关于内存泄露检测的开源方案</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关于屏蔽内存泄露的建议"><span class="nav-number">4.</span> <span class="nav-text">关于屏蔽内存泄露的建议</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分析内存的技巧"><span class="nav-number">5.</span> <span class="nav-text">分析内存的技巧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

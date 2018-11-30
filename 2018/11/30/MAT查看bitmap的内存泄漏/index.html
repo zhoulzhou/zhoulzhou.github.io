@@ -79,20 +79,25 @@
 
 
 
-<meta name="description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
+<meta name="description" content="前言在开发中，一些类似Bitmap的对象会占用很大的内存，即使使用弱引用、代码优化及时释放，可以有效减少内存泄漏现象的产生。但这依然不够，很多时候，我们需要尽量少的使用内存。对用户来说，用户并不懂内存泄漏，但是用户可以通过后台查看你的内存使用情况，如果占用过大，一些用户会选择卸载来清理门户。我们可以通过分析，找出内存占用较大的模块，通过代码或者其他一些方式，减少内存使用。 准备工具在所有操作开始之">
 <meta property="og:type" content="article">
-<meta property="og:title" content="超级英雄消亡史">
-<meta property="og:url" content="http://yoursite.com/2018/11/25/超级英雄消亡史/index.html">
+<meta property="og:title" content="MAT查看bitmap的内存泄漏">
+<meta property="og:url" content="http://yoursite.com/2018/11/30/MAT查看bitmap的内存泄漏/index.html">
 <meta property="og:site_name" content="KEEM--BLOG">
-<meta property="og:description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
+<meta property="og:description" content="前言在开发中，一些类似Bitmap的对象会占用很大的内存，即使使用弱引用、代码优化及时释放，可以有效减少内存泄漏现象的产生。但这依然不够，很多时候，我们需要尽量少的使用内存。对用户来说，用户并不懂内存泄漏，但是用户可以通过后台查看你的内存使用情况，如果占用过大，一些用户会选择卸载来清理门户。我们可以通过分析，找出内存占用较大的模块，通过代码或者其他一些方式，减少内存使用。 准备工具在所有操作开始之">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg">
-<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553426873.jpg">
-<meta property="og:updated_time" content="2018-11-25T01:10:17.021Z">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei12.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei13.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei14.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei15.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei16.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei17.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei18.webp">
+<meta property="og:updated_time" content="2018-11-30T12:30:20.883Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="超级英雄消亡史">
-<meta name="twitter:description" content="01 喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。 超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。 但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一">
-<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg">
+<meta name="twitter:title" content="MAT查看bitmap的内存泄漏">
+<meta name="twitter:description" content="前言在开发中，一些类似Bitmap的对象会占用很大的内存，即使使用弱引用、代码优化及时释放，可以有效减少内存泄漏现象的产生。但这依然不够，很多时候，我们需要尽量少的使用内存。对用户来说，用户并不懂内存泄漏，但是用户可以通过后台查看你的内存使用情况，如果占用过大，一些用户会选择卸载来清理门户。我们可以通过分析，找出内存占用较大的模块，通过代码或者其他一些方式，减少内存使用。 准备工具在所有操作开始之">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei12.webp">
 
 
 
@@ -122,13 +127,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/11/25/超级英雄消亡史/">
+  <link rel="canonical" href="http://yoursite.com/2018/11/30/MAT查看bitmap的内存泄漏/">
 
 
 
 
 
-  <title>超级英雄消亡史 | KEEM--BLOG</title>
+  <title>MAT查看bitmap的内存泄漏 | KEEM--BLOG</title>
   
 
 
@@ -225,7 +230,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/25/超级英雄消亡史/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/30/MAT查看bitmap的内存泄漏/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Keem Wang">
@@ -242,7 +247,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">超级英雄消亡史</h1>
+          <h1 class="post-title" itemprop="name headline">MAT查看bitmap的内存泄漏</h1>
         
 
         <div class="post-meta">
@@ -254,8 +259,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-25T08:50:47+08:00">
-                2018-11-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-11-30T14:38:32+08:00">
+                2018-11-30
               </time>
             
 
@@ -277,8 +282,8 @@
               
               
                 <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/如何思考/" itemprop="url" rel="index">
-                    <span itemprop="name">如何思考</span>
+                  <a href="/categories/ANDROID/" itemprop="url" rel="index">
+                    <span itemprop="name">ANDROID</span>
                   </a>
                 </span>
 
@@ -314,30 +319,31 @@
       
 
       
-        <p>01</p>
-<p>喜欢美漫的人都知道，“超人”这个超级英雄鼻祖，诞生在美国经济大萧条期间。</p>
-<p>超人的两个创造者，杰里·西格尔和乔·舒斯特在克利夫兰的高中相遇时，经济大萧条刚刚开始两年。还能上学就算是幸运的，毕竟整个大萧条期间有 200~400 万的中学生中途退学。</p>
-<p>但为了赚钱贴补家用他们也得想办法。西格尔文笔很好，舒斯特擅长绘画，两个人一拍即合决定做漫画。受到科幻小说的影响他们创造了一个叫“超人王朝”的故事，一个流浪汉被注射了一种从彗星中提取的元素，开始用思想奴役别人，让人类自相残杀。</p>
-<p>这个人设这也许和两位创作者的成长背景有关：西格尔和舒斯特都是犹太人移民，前者生于克利夫兰，后者生于加拿大。他们的父母是裁缝，家里不算有钱，长得也不讨女孩子喜欢。两个边缘青年画出了一个欺负人的流浪汉形象，倒不是不可理解。</p>
-<p>但画着画着，西格尔决定把超人变成好人。他们给超人确定了的服装是一套紧身衣——马戏团的大力士和空中飞人表演者总是穿着紧身衣，因为这样买不起前排票的山顶观众也能看得清。在大萧条期间，马戏团几乎是唯一能够让美国人感受到慰藉的娱乐活动。</p>
-<p>不停地试错之后，1938 年 4 月 18 日，13 页的超人故事在新刊《动作漫画》上和读者见面了。那期漫画封面上，超人手举一辆轿车，要把它砸向坏人，坏人几乎被吓尿了，抱头乱窜。</p>
-<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553554359.jpg" alt="avatar"></p>
-<p>几周之内，20 万份《动作漫画》第一期销售一空，一时间洛阳纸贵。</p>
-<p>当时的超人并不像我们如今在电影和电视里看到的那么完美。他说话强硬，双拳有力，是个喜欢用暴力解决问题的彪形大汉。但这样强硬的形象，让经济大萧条特殊时代下人们的脆弱心灵得到了某程度上的安抚。在漫画里，超人对抗着衰败的城市，他把贫民窟夷为平地，迫使政府建起了条件极好的住房，他还抓住了诈骗钱财的股票经纪人。</p>
-<p>于是只用了一年时间，超人就成为了风靡全美的文化现象，《时代》杂志评价它“在美国，超人已经在青少年群体中快速成了最流行的象征”。那时候《动作漫画》一个月的印刷量就超过 100 万。</p>
-<p>到了二战时期，超人的人设又悄然有了转移。</p>
-<p>1940 年 2 月 17 日，《形象》杂志上架，那一期的封面女郎是丽塔·海华丝，上世纪最迷人的女神之一，她头顶的花环上写着“超人如何抓到了希特勒和斯大林”。</p>
-<p>那本杂志里，《形象》杂志的编辑委托西格尔和舒斯特写了一个两页的故事大纲，内容是“超人会如何终结这场战争”。于是超人在德国北部边境，轻易地打破了德军的齐格菲防线，活捉希特勒和斯大林，将他们交给了国际联盟。</p>
-<p>但等到《超人》第13期在报亭出售的时候，日本偷袭了珍珠港，美国被迫加入二战。因为自己是战争的一份子了，美国对自己的认知不可避免地发生了改变，随之改变的还有超人。</p>
-<p>《时代》杂志提出了著名的超人两难困境：超人有一颗爱国之心，也有着最强大的战斗力，他应该参军，但他却不能，因为他能轻松打败日本和德国，但现实中战争不会那么快顺利结束，“如果他没有尽自己所能，任由战争这么发展下去，数百万人对他的尊敬将不复存在”。</p>
-<p>西格尔和舒斯特知道自己不能再像之前那样胡编乱造了，毕竟德军和日军的子弹可不会从美军士兵的胸口弹开，所以他们决定把超人变成一个鼓舞士气的符号和标志。</p>
-<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/huxiu/211553426873.jpg" alt="avatar"></p>
-<p>那时候，超人在漫画里鼓励读者买战时债券、储蓄邮票，种植战时菜园，献血，他还会拜访军事基地，参加军事演习，甚至连性格都发生了变化，变得更热心、更安全可靠。</p>
-<p>超人还和当年封面上的丽塔·海华丝一起成为身处前线的美军士兵最大的精神寄托，甚至那时候超人服装的颜色搭配都和美国国旗很相似。</p>
-<p>靠着凝聚战时精神征服美国人的漫画英雄并不止超人。1940 年，及时漫画推出的第一期《美国队长》被摆上报亭，注射了超级士兵血清的史蒂夫·罗杰斯与威胁美国和平的敌人展开对抗。</p>
-<p>《美国队长》卖得很好，封面是美国队长狠揍希特勒的第一期就卖出了 100 万册。在前线征战的美军士兵的背包里，不是超人就是美国队长。</p>
-<p>超人也好，美国队长也好，他们在上世纪 30~40 年代特殊的社会环境下，起到了抚慰国民民心的作用。这些超级英雄符号意味着力量，也就意味着安全。在经济大萧条和战争背景下，美国人民最大的愿望其实就是最朴素的愿望：国泰民安。</p>
-<p>但 1945 年战争结束了。</p>
+        <h4 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h4><p>在开发中，一些类似Bitmap的对象会占用很大的内存，即使使用弱引用、代码优化及时释放，可以有效减少内存泄漏现象的产生。但这依然不够，很多时候，我们需要尽量少的使用内存。对用户来说，用户并不懂内存泄漏，但是用户可以通过后台查看你的内存使用情况，如果占用过大，一些用户会选择卸载来清理门户。<br>我们可以通过分析，找出内存占用较大的模块，通过代码或者其他一些方式，减少内存使用。</p>
+<h4 id="准备工具"><a href="#准备工具" class="headerlink" title="准备工具"></a>准备工具</h4><p>在所有操作开始之前，我们需要准备一些材料<br>首先是MAT内存分析工具，基本没有什么安装过程，这里附上下载地址：<br><a href="http://www.eclipse.org/mat/downloads.php" target="_blank" rel="noopener">http://www.eclipse.org/mat/downloads.php</a></p>
+<p>还有就是Bitmap查看工具GIMP，下载地址：<br><a href="http://www.gimp.org/" target="_blank" rel="noopener">http://www.gimp.org/</a></p>
+<h4 id="获取-hprof文件"><a href="#获取-hprof文件" class="headerlink" title="获取.hprof文件"></a>获取.hprof文件</h4><p>在Android Studio中，我们可以在Android Profile窗口中看到内存的使用情况，并进行手动GC，获取.hprof文件等操作</p>
+<p><strong>在获取.hprof文件之前，我们需要手动回收内存，由于系统内存回收是优先级很低的线程，如果不去手动回收，会造成我们分析的不必要失误</strong></p>
+<p>但是此时的.hprof是不能用MAT打开的，需要导出才能继续分析。需要通过命令转换hprof文件。</p>
+<h4 id="分析内存占用"><a href="#分析内存占用" class="headerlink" title="分析内存占用"></a>分析内存占用</h4><p>MAT的强大在于它把所有的内存占用情况以数据的形式表达出来，一眼就能了解当前的内存占用情况。<br>双击打开解压的Memory Analyzer，File–&gt;Open Heap Dump,选择保存的.hprof文件，等待加载，点击Finish。</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei12.webp" alt="avatar"></p>
+<p>等待加载，在Overview中可以查看饼状图：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei13.webp" alt="avatar"></p>
+<p>选择Histogram，如图：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei14.webp" alt="avatar"></p>
+<p>Histogram视图下，点击Retained Heap查看当前内存占用情况，并从大到小排序，如图：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei15.webp" alt="avatar"></p>
+<p>到这里为止，其实我们可以看出大概了，Bitmap对内存的占用简直令人发指。</p>
+<p>选择android.graphics.Bitmap，查看Bitmap占用情况，右键–&gt;List Objects–&gt;withoutgoing references，如图：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei16.webp" alt="avatar"></p>
+<p>点击Retained Heap排序，我们可以看到单单一个Bitmap对象就占用了3M，而这其中类似大小的不在少数。</p>
+<p>选择需要查看的Bitmap对象，双击打开：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei17.webp" alt="avatar"></p>
+<p>选中mBuffer，导出byte，右键–&gt;Copy–&gt;Save Value to File，保存到指定目录，文件后缀名可为.data</p>
+<p>打开安装好的GIMP，文件–&gt;打开，选择刚刚保存的.data文件：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei18.webp" alt="avatar"></p>
+<p>其中，图像类型选择RGBAlpha，宽度和高度填入Eclipse Analyzer中获取的。</p>
+<p>点击打开，即可看到内存占用的到底是个什么图片，并且针对这些图片进行优化。</p>
 
       
     </div>
@@ -362,8 +368,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/11/24/备份恢复HEXO/" rel="next" title="备份恢复HEXO">
-                <i class="fa fa-chevron-left"></i> 备份恢复HEXO
+              <a href="/2018/11/30/Android-查看应用的最大可用内存/" rel="next" title="Android 查看应用的最大可用内存">
+                <i class="fa fa-chevron-left"></i> Android 查看应用的最大可用内存
               </a>
             
           </div>
@@ -372,8 +378,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/11/26/多端部署/" rel="prev" title="多端部署">
-                多端部署 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/11/30/自动动手编译Android源码/" rel="prev" title="自动动手编译Android源码">
+                自动动手编译Android源码 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -426,8 +432,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
@@ -478,6 +493,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#准备工具"><span class="nav-number">2.</span> <span class="nav-text">准备工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#获取-hprof文件"><span class="nav-number">3.</span> <span class="nav-text">获取.hprof文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分析内存占用"><span class="nav-number">4.</span> <span class="nav-text">分析内存占用</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
