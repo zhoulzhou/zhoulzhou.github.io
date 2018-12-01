@@ -1,5 +1,5 @@
 ---
-title: 备份恢复HEXO
+title: Hexo备份恢复
 date: 2018-11-24 17:32:55
 tags:
 categories:

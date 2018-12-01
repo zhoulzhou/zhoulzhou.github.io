@@ -1,5 +1,5 @@
 ---
-title: hexo编辑常用方法
+title: Hexo编辑常用方法
 date: 2018-11-30 10:04:57
 tags:
 categories:

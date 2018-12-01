@@ -1,5 +1,5 @@
 ---
-title: 自动动手编译Android源码
+title: 自己动手编译Android源码
 date: 2018-11-30 15:03:28
 tags:
 categories:

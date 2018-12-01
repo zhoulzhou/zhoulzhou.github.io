@@ -3,7 +3,7 @@ title: 自定义View Draw过程
 date: 2018-12-01 10:26:11
 tags:
 categories:
-- ANDROID
+- 自定义View
 ---
 #### 目录
 

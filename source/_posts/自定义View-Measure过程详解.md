@@ -3,7 +3,7 @@ title: 自定义View Measure过程详解
 date: 2018-12-01 09:17:26
 tags:
 categories:
-- ANDROID
+- 自定义View
 ---
 接上一篇
 #### measure过程详解

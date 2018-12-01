@@ -3,7 +3,7 @@ title: Android 查看应用的最大可用内存
 date: 2018-11-30 13:31:49
 tags:
 categories:
-- ANDROID
+- 内存检测
 ---
 #### 单个应用可用的最大内存
 Android设备出厂以后，java虚拟机对单个应用的最大内存分配就确定下来了，超出这个值就会OOM。这个属性值是定义在/system/build.prop文件中的

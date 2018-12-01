@@ -3,7 +3,7 @@ title: Gradle依赖详解
 date: 2018-11-30 16:01:17
 tags:
 categories:
-- ANDROID
+- 开发工具
 ---
 #### 仓库
 1、一个仓库可以被视为一些文件的集合体。Gradle不会默认为你的项目添加任何仓库。所以你需要把它们添加到repositories方法体内。如果是使用的是Android studio，那么工具已经为你准备好了这一切：

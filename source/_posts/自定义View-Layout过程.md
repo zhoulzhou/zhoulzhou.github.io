@@ -3,7 +3,7 @@ title: 自定义View Layout过程
 date: 2018-12-01 09:52:55
 tags:
 categories:
-- ANDROID
+- 自定义View
 ---
 #### 目录
 

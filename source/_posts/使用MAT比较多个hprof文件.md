@@ -3,7 +3,7 @@ title: 使用MAT比较多个hprof文件
 date: 2018-11-30 09:58:08
 tags:
 categories:
-- ANDROID
+- 内存检测
 ---
 调试内存泄露时，有时候适时比较2个或多个heap dump文件是很有用的。这时需要生成多个单独的HPROF文件。
 

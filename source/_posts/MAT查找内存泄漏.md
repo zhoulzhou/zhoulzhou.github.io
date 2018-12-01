@@ -3,7 +3,7 @@ title: MAT查找内存泄漏
 date: 2018-11-30 11:04:46
 tags:
 categories:
-- ANDROID
+- 内存检测
 ---
 #### 获取堆转储HPROF文件
 通过点击时间线下方工具栏中的 Export heap dump as HPROF file，将堆转储导出到一个 HPROF 文件中。 在显示的对话框中，确保使用 .hprof 后缀保存文件。

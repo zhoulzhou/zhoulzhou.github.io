@@ -3,7 +3,7 @@ title: 自定义View基础
 date: 2018-12-01 08:12:36
 tags:
 categories:
-- ANDROID
+- 自定义View
 ---
 #### 前言
 自定义View原理是Android开发者必须了解的基础；

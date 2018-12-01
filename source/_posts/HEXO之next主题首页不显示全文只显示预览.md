@@ -1,5 +1,5 @@
 ---
-title: HEXO之next主题首页不显示全文只显示预览
+title: Hexo之next主题首页不显示全文只显示预览
 date: 2018-11-29 16:33:39
 tags:
 categories:

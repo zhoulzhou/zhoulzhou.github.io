@@ -3,7 +3,7 @@ title: 自定义View Layout过程实例详解
 date: 2018-12-01 10:10:12
 tags:
 categories:
-- ANDROID
+- 自定义View
 ---
 #### 实例讲解
 为了更好理解ViewGroup的layout过程（特别是复写onLayout（））
