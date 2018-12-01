@@ -1850,7 +1850,7 @@ pre .javascript .function {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #e56193;
+  background: #c3a8be;
 }
 .links-of-blogroll {
   font-size: 13px;
@@ -3133,4 +3133,8 @@ ul.breadcrumb li+li:last-child {
   .pagination {
     margin: 8px 0 0;
   }
+}
+body {
+  background: url("/images/background.jpg");
+  background-attachment: fixed;
 }
