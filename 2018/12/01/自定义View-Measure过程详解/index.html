@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="接上一篇 measure过程详解measure过程 根据View的类型分为2种情况：  接下来，我将详细分析这两种measure过程 单一View的measure过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络图片的ImageView控件注：自定义View在多数情况下都有替代方案：图片 / 组合动画，但二者可能会导致内存耗费过大，从而引">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自定义View Measure过程详解">
+<meta property="og:url" content="http://yoursite.com/2018/12/01/自定义View-Measure过程详解/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="接上一篇 measure过程详解measure过程 根据View的类型分为2种情况：  接下来，我将详细分析这两种measure过程 单一View的measure过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络图片的ImageView控件注：自定义View在多数情况下都有替代方案：图片 / 组合动画，但二者可能会导致内存耗费过大，从而引">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi19.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi20.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi21.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi22.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi23.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi24.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi25.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi26.webp">
+<meta property="og:updated_time" content="2018-12-01T01:40:16.870Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="自定义View Measure过程详解">
+<meta name="twitter:description" content="接上一篇 measure过程详解measure过程 根据View的类型分为2种情况：  接下来，我将详细分析这两种measure过程 单一View的measure过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络图片的ImageView控件注：自定义View在多数情况下都有替代方案：图片 / 组合动画，但二者可能会导致内存耗费过大，从而引">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi19.webp">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/12/01/自定义View-Measure过程详解/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>自定义View Measure过程详解 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/01/自定义View-Measure过程详解/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">自定义View Measure过程详解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-01 09:17:26 / 修改时间：09:40:16" itemprop="dateCreated datePublished" datetime="2018-12-01T09:17:26+08:00">2018-12-01</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>接上一篇</p>
+<h4 id="measure过程详解"><a href="#measure过程详解" class="headerlink" title="measure过程详解"></a>measure过程详解</h4><p>measure过程 根据View的类型分为2种情况：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi19.webp" alt="avatar"></p>
+<p>接下来，我将详细分析这两种measure过程</p>
+<h4 id="单一View的measure过程"><a href="#单一View的measure过程" class="headerlink" title="单一View的measure过程"></a>单一View的measure过程</h4><p><strong>应用场景</strong><br>在无现成的控件View满足需求、需自己实现时，则使用自定义单一View</p>
+<blockquote>
+<p>如：制作一个支持加载网络图片的ImageView控件<br>注：自定义View在多数情况下都有替代方案：图片 / 组合动画，但二者可能会导致内存耗费过大，从而引起内存溢出等问题。</p>
+</blockquote>
+<p><strong>具体使用</strong><br>继承自View、SurfaceView 或 其他View；不包含子View</p>
+<h4 id="具体流程"><a href="#具体流程" class="headerlink" title="具体流程"></a>具体流程</h4><p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi20.webp" alt="avatar"></p>
+<p>下面我将一个个方法进行详细分析：入口 = measure（）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 源码分析：measure（）</span><br><span class="line">  * 定义：Measure过程的入口；属于View.java类 &amp; final类型，即子类不能重写此方法</span><br><span class="line">  * 作用：基本测量逻辑的判断</span><br><span class="line">  **/ </span><br><span class="line"></span><br><span class="line">    public final void measure(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line"></span><br><span class="line">        // 参数说明：View的宽 / 高测量规格</span><br><span class="line"></span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line">        int cacheIndex = (mPrivateFlags &amp; PFLAG_FORCE_LAYOUT) == PFLAG_FORCE_LAYOUT ? -1 :</span><br><span class="line">                mMeasureCache.indexOfKey(key);</span><br><span class="line"></span><br><span class="line">        if (cacheIndex &lt; 0 || sIgnoreMeasureCache) &#123;</span><br><span class="line">            </span><br><span class="line">            onMeasure(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">            // 计算视图大小 -&gt;&gt;分析1</span><br><span class="line"></span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            ...</span><br><span class="line">      </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：onMeasure（）</span><br><span class="line">  * 作用：a. 根据View宽/高的测量规格计算View的宽/高值：getDefaultSize()</span><br><span class="line">  *      b. 存储测量后的View宽 / 高：setMeasuredDimension()</span><br><span class="line">  **/ </span><br><span class="line">  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) &#123;  </span><br><span class="line">    // 参数说明：View的宽 / 高测量规格</span><br><span class="line"></span><br><span class="line">    setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),  </span><br><span class="line">                         getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));  </span><br><span class="line">    // setMeasuredDimension() ：获得View宽/高的测量值 -&gt;&gt;分析2</span><br><span class="line">    // 传入的参数通过getDefaultSize()获得 -&gt;&gt;分析3</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析2：setMeasuredDimension()</span><br><span class="line">  * 作用：存储测量后的View宽 / 高</span><br><span class="line">  * 注：该方法即为我们重写onMeasure()所要实现的最终目的</span><br><span class="line">  **/</span><br><span class="line">    protected final void setMeasuredDimension(int measuredWidth, int measuredHeight) &#123;  </span><br><span class="line"></span><br><span class="line">    //参数说明：测量后子View的宽 / 高值</span><br><span class="line"></span><br><span class="line">        // 将测量后子View的宽 / 高值进行传递</span><br><span class="line">            mMeasuredWidth = measuredWidth;  </span><br><span class="line">            mMeasuredHeight = measuredHeight;  </span><br><span class="line">          </span><br><span class="line">            mPrivateFlags |= PFLAG_MEASURED_DIMENSION_SET;  </span><br><span class="line">        &#125; </span><br><span class="line">    // 由于setMeasuredDimension（）的参数是从getDefaultSize()获得的</span><br><span class="line">    // 下面我们继续看getDefaultSize()的介绍</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析3：getDefaultSize()</span><br><span class="line">  * 作用：根据View宽/高的测量规格计算View的宽/高值</span><br><span class="line">  **/</span><br><span class="line">  public static int getDefaultSize(int size, int measureSpec) &#123;  </span><br><span class="line"></span><br><span class="line">        // 参数说明：</span><br><span class="line">        // size：提供的默认大小</span><br><span class="line">        // measureSpec：宽/高的测量规格（含模式 &amp; 测量大小）</span><br><span class="line"></span><br><span class="line">            // 设置默认大小</span><br><span class="line">            int result = size; </span><br><span class="line">            </span><br><span class="line">            // 获取宽/高测量规格的模式 &amp; 测量大小</span><br><span class="line">            int specMode = MeasureSpec.getMode(measureSpec);  </span><br><span class="line">            int specSize = MeasureSpec.getSize(measureSpec);  </span><br><span class="line">          </span><br><span class="line">            switch (specMode) &#123;  </span><br><span class="line">                // 模式为UNSPECIFIED时，使用提供的默认大小 = 参数Size</span><br><span class="line">                case MeasureSpec.UNSPECIFIED:  </span><br><span class="line">                    result = size;  </span><br><span class="line">                    break;  </span><br><span class="line"></span><br><span class="line">                // 模式为AT_MOST,EXACTLY时，使用View测量后的宽/高值 = measureSpec中的Size</span><br><span class="line">                case MeasureSpec.AT_MOST:  </span><br><span class="line">                case MeasureSpec.EXACTLY:  </span><br><span class="line">                    result = specSize;  </span><br><span class="line">                    break;  </span><br><span class="line">            &#125;  </span><br><span class="line"></span><br><span class="line">         // 返回View的宽/高值</span><br><span class="line">            return result;  </span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>上面提到，当模式是UNSPECIFIED时，使用的是提供的默认大小（即第一个参数size）；那么，提供的默认大小具体是多少呢？<br>答：在onMeasure（）方法中，getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec)中传入的默认大小是getSuggestedMinimumWidth()。</p>
+</blockquote>
+<p>接下来我们继续看getSuggestedMinimumWidth()的源码分析</p>
+<blockquote>
+<p>由于getSuggestedMinimumHeight()类似，所以此处仅分析getSuggestedMinimumWidth()</p>
+</blockquote>
+<p>源码分析如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">protected int getSuggestedMinimumWidth() &#123;</span><br><span class="line">    return (mBackground == null) ? mMinWidth : max(mMinWidth,mBackground.getMinimumWidth());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//getSuggestedMinimumHeight()同理</span><br></pre></td></tr></table></figure>
+<p>从代码可以看出：<br><strong>若 View 无设置背景，那么View的宽度 = mMinWidth</strong><br>·mMinWidth· = android:minWidth属性所指定的值；<br>若android:minWidth没指定，则默认为0</p>
+<p><strong>若 View设置了背景，View的宽度为mMinWidth和mBackground.getMinimumWidth()中的最大值</strong></p>
+<p>那么，mBackground.getMinimumWidth()的大小具体指多少？继续看getMinimumWidth()的源码分析：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public int getMinimumWidth() &#123;</span><br><span class="line">    final int intrinsicWidth = getIntrinsicWidth();</span><br><span class="line">    //返回背景图Drawable的原始宽度</span><br><span class="line">    return intrinsicWidth &gt; 0 ? intrinsicWidth :0 ;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 由源码可知：mBackground.getMinimumWidth()的大小 = 背景图Drawable的原始宽度</span><br><span class="line">// 若无原始宽度，则为0；</span><br><span class="line">// 注：BitmapDrawable有原始宽度，而ShapeDrawable没有</span><br></pre></td></tr></table></figure>
+<p>总结：getDefaultSize()计算View的宽/高值的逻辑</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi21.webp" alt="avatar"></p>
+<p><strong>至此，单一View的宽/高值已经测量完成，即对于单一View的measure过程已经完成。</strong></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>对于单一View的measure过程，如下：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi22.webp" alt="avatar"></p>
+<blockquote>
+<p>实际作用的方法：getDefaultSize() = 计算View的宽/高值、setMeasuredDimension（） = 存储测量后的View宽 / 高</p>
+</blockquote>
+<h4 id="ViewGroup的measure过程"><a href="#ViewGroup的measure过程" class="headerlink" title="ViewGroup的measure过程"></a>ViewGroup的measure过程</h4><p><strong>应用场景</strong><br>利用现有的组件根据特定的布局方式来组成新的组件</p>
+<p><strong>具体使用</strong><br>继承自ViewGroup 或 各种Layout；含有子 View</p>
+<h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><blockquote>
+<p>遍历 测量所有子View的尺寸<br>合并将所有子View的尺寸进行，最终得到ViewGroup父视图的测量值<br>自上而下、一层层地传递下去，直到完成整个View树的measure（）过程</p>
+</blockquote>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi23.webp" alt="avatar"></p>
+<h4 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h4><p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi24.webp" alt="avatar"></p>
+<p>下面我将一个个方法进行详细分析：入口 = measure（）<br>若需进行自定义ViewGroup，则需重写onMeasure()，下文会提到</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 源码分析：measure()</span><br><span class="line">  * 作用：基本测量逻辑的判断；调用onMeasure()</span><br><span class="line">  * 注：与单一View measure过程中讲的measure()一致</span><br><span class="line">  **/ </span><br><span class="line">  public final void measure(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">    ...</span><br><span class="line">    int cacheIndex = (mPrivateFlags &amp; PFLAG_FORCE_LAYOUT) == PFLAG_FORCE_LAYOUT ? -1 :</span><br><span class="line">            mMeasureCache.indexOfKey(key);</span><br><span class="line">    if (cacheIndex &lt; 0 || sIgnoreMeasureCache) &#123;</span><br><span class="line"></span><br><span class="line">        // 调用onMeasure()计算视图大小</span><br><span class="line">        onMeasure(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">        mPrivateFlags3 &amp;= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：onMeasure()</span><br><span class="line">  * 作用：遍历子View &amp; 测量</span><br><span class="line">  * 注：ViewGroup = 一个抽象类 = 无重写View的onMeasure（），需自身复写</span><br><span class="line">  **/</span><br></pre></td></tr></table></figure>
+<p><strong>为什么ViewGroup的measure过程不像单一View的measure过程那样对onMeasure（）做统一的实现？</strong>（如下代码）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 分析：子View的onMeasure()</span><br><span class="line">  * 作用：a. 根据View宽/高的测量规格计算View的宽/高值：getDefaultSize()</span><br><span class="line">  *      b. 存储测量后的View宽 / 高：setMeasuredDimension()</span><br><span class="line">  * 注：与单一View measure过程中讲的onMeasure()一致</span><br><span class="line">  **/ </span><br><span class="line">  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) &#123;  </span><br><span class="line">    // 参数说明：View的宽 / 高测量规格</span><br><span class="line"></span><br><span class="line">    setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),  </span><br><span class="line">                         getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));  </span><br><span class="line">    // setMeasuredDimension() ：获得View宽/高的测量值 </span><br><span class="line">    // 传入的参数通过getDefaultSize()获得</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>答：因为不同的ViewGroup子类（LinearLayout、RelativeLayout / 自定义ViewGroup子类等）具备不同的布局特性，这导致他们子View的测量方法各有不同</p>
+<blockquote>
+<p>而onMeasure（）的作用 = 测量View的宽/高值</p>
+</blockquote>
+<p><strong>因此，ViewGroup无法对onMeasure（）作统一实现。这个也是单一View的measure过程与ViewGroup过程最大的不同。</strong></p>
+<blockquote>
+<p>即 单一View measure过程的onMeasure（）具有统一实现，而ViewGroup则没有<br>注：其实，在单一View measure过程中，getDefaultSize()只是简单的测量了宽高值，在实际使用时有时需更精细的测量。所以有时候也需重写onMeasure（）</p>
+</blockquote>
+<p><strong>在自定义ViewGroup中，关键在于：根据需求复写onMeasure()从而实现你的子View测量逻辑。复写onMeasure()的套路如下：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 根据自身的测量逻辑复写onMeasure（），分为3步</span><br><span class="line">  * 1. 遍历所有子View &amp; 测量：measureChildren（）</span><br><span class="line">  * 2. 合并所有子View的尺寸大小,最终得到ViewGroup父视图的测量值（自身实现）</span><br><span class="line">  * 3. 存储测量后View宽/高的值：调用setMeasuredDimension()  </span><br><span class="line">  **/ </span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) &#123;  </span><br><span class="line"></span><br><span class="line">        // 定义存放测量后的View宽/高的变量</span><br><span class="line">        int widthMeasure ;</span><br><span class="line">        int heightMeasure ;</span><br><span class="line"></span><br><span class="line">        // 1. 遍历所有子View &amp; 测量(measureChildren（）)</span><br><span class="line">        // -&gt;&gt; 分析1</span><br><span class="line">        measureChildren(widthMeasureSpec, heightMeasureSpec)；</span><br><span class="line"></span><br><span class="line">        // 2. 合并所有子View的尺寸大小，最终得到ViewGroup父视图的测量值</span><br><span class="line">         void measureCarson&#123;</span><br><span class="line">             ... // 自身实现</span><br><span class="line">         &#125;</span><br><span class="line"></span><br><span class="line">        // 3. 存储测量后View宽/高的值：调用setMeasuredDimension()  </span><br><span class="line">        // 类似单一View的过程，此处不作过多描述</span><br><span class="line">        setMeasuredDimension(widthMeasure,  heightMeasure);  </span><br><span class="line">  &#125;</span><br><span class="line">  // 从上可看出：</span><br><span class="line">  // 复写onMeasure（）有三步，其中2步直接调用系统方法</span><br><span class="line">  // 需自身实现的功能实际仅为步骤2：合并所有子View的尺寸大小</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：measureChildren()</span><br><span class="line">  * 作用：遍历子View &amp; 调用measureChild()进行下一步测量</span><br><span class="line">  **/ </span><br><span class="line"></span><br><span class="line">    protected void measureChildren(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">        // 参数说明：父视图的测量规格（MeasureSpec）</span><br><span class="line"></span><br><span class="line">                final int size = mChildrenCount;</span><br><span class="line">                final View[] children = mChildren;</span><br><span class="line"></span><br><span class="line">                // 遍历所有子view</span><br><span class="line">                for (int i = 0; i &lt; size; ++i) &#123;</span><br><span class="line">                    final View child = children[i];</span><br><span class="line">                     // 调用measureChild()进行下一步的测量 -&gt;&gt;分析1</span><br><span class="line">                    if ((child.mViewFlags &amp; VISIBILITY_MASK) != GONE) &#123;</span><br><span class="line">                        measureChild(child, widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析2：measureChild()</span><br><span class="line">  * 作用：a. 计算单个子View的MeasureSpec</span><br><span class="line">  *      b. 测量每个子View最后的宽 / 高：调用子View的measure()</span><br><span class="line">  **/ </span><br><span class="line">  protected void measureChild(View child, int parentWidthMeasureSpec,</span><br><span class="line">            int parentHeightMeasureSpec) &#123;</span><br><span class="line"></span><br><span class="line">        // 1. 获取子视图的布局参数</span><br><span class="line">        final LayoutParams lp = child.getLayoutParams();</span><br><span class="line"></span><br><span class="line">        // 2. 根据父视图的MeasureSpec &amp; 布局参数LayoutParams，计算单个子View的MeasureSpec</span><br><span class="line">        // getChildMeasureSpec() 请看上面第2节储备知识处</span><br><span class="line">        final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,// 获取 ChildView 的 widthMeasureSpec</span><br><span class="line">                mPaddingLeft + mPaddingRight, lp.width);</span><br><span class="line">        final int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,// 获取 ChildView 的 heightMeasureSpec</span><br><span class="line">                mPaddingTop + mPaddingBottom, lp.height);</span><br><span class="line"></span><br><span class="line">        // 3. 将计算好的子View的MeasureSpec值传入measure()，进行最后的测量</span><br><span class="line">        // 下面的流程即类似单一View的过程，此处不作过多描述</span><br><span class="line">        child.measure(childWidthMeasureSpec, childHeightMeasureSpec);</span><br><span class="line">    &#125;</span><br><span class="line">    // 回到调用原处</span><br></pre></td></tr></table></figure>
+<p>至此，ViewGroup的measure过程分析完毕</p>
+<h4 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h4><p>ViewGroup的measure过程如下：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi25.webp" alt="avatar"></p>
+<h4 id="实例说明"><a href="#实例说明" class="headerlink" title="实例说明"></a>实例说明</h4><p>为了让大家更好地理解ViewGroup的measure过程（特别是复写onMeasure()），下面，我将用ViewGroup的子类LinearLayout来分析下ViewGroup的measure过程</p>
+<h4 id="ViewGroup的measure过程实例解析（LinearLayout）"><a href="#ViewGroup的measure过程实例解析（LinearLayout）" class="headerlink" title="ViewGroup的measure过程实例解析（LinearLayout）"></a>ViewGroup的measure过程实例解析（LinearLayout）</h4><p>此处直接进入LinearLayout复写的onMeasure（）代码分析</p>
+<blockquote>
+<p>详细分析请看代码注释</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line"></span><br><span class="line">      // 根据不同的布局属性进行不同的计算</span><br><span class="line">      // 此处只选垂直方向的测量过程，即measureVertical()-&gt;&gt;分析1</span><br><span class="line">      if (mOrientation == VERTICAL) &#123;</span><br><span class="line">          measureVertical(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">          measureHorizontal(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">  /**</span><br><span class="line">    * 分析1：measureVertical()</span><br><span class="line">    * 作用：测量LinearLayout垂直方向的测量尺寸</span><br><span class="line">    **/ </span><br><span class="line">  void measureVertical(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">      </span><br><span class="line">      /**</span><br><span class="line">       *  其余测量逻辑</span><br><span class="line">       **/</span><br><span class="line">          // 获取垂直方向上的子View个数</span><br><span class="line">          final int count = getVirtualChildCount();</span><br><span class="line"></span><br><span class="line">          // 遍历子View获取其高度，并记录下子View中最高的高度数值</span><br><span class="line">          for (int i = 0; i &lt; count; ++i) &#123;</span><br><span class="line">              final View child = getVirtualChildAt(i);</span><br><span class="line"></span><br><span class="line">              // 子View不可见，直接跳过该View的measure过程，getChildrenSkipCount()返回值恒为0</span><br><span class="line">              // 注：若view的可见属性设置为VIEW.INVISIBLE，还是会计算该view大小</span><br><span class="line">              if (child.getVisibility() == View.GONE) &#123;</span><br><span class="line">                 i += getChildrenSkipCount(child, i);</span><br><span class="line">                 continue;</span><br><span class="line">              &#125;</span><br><span class="line"></span><br><span class="line">              // 记录子View是否有weight属性设置，用于后面判断是否需要二次measure</span><br><span class="line">              totalWeight += lp.weight;</span><br><span class="line"></span><br><span class="line">              if (heightMode == MeasureSpec.EXACTLY &amp;&amp; lp.height == 0 &amp;&amp; lp.weight &gt; 0) &#123;</span><br><span class="line">                  // 如果LinearLayout的specMode为EXACTLY且子View设置了weight属性，在这里会跳过子View的measure过程</span><br><span class="line">                  // 同时标记skippedMeasure属性为true，后面会根据该属性决定是否进行第二次measure</span><br><span class="line">                // 若LinearLayout的子View设置了weight，会进行两次measure计算，比较耗时</span><br><span class="line">                  // 这就是为什么LinearLayout的子View需要使用weight属性时候，最好替换成RelativeLayout布局</span><br><span class="line">                </span><br><span class="line">                  final int totalLength = mTotalLength;</span><br><span class="line">                  mTotalLength = Math.max(totalLength, totalLength + lp.topMargin + lp.bottomMargin);</span><br><span class="line">                  skippedMeasure = true;</span><br><span class="line">              &#125; else &#123;</span><br><span class="line">                  int oldHeight = Integer.MIN_VALUE;</span><br><span class="line">     /**</span><br><span class="line">       *  步骤1：遍历所有子View &amp; 测量：measureChildren（）</span><br><span class="line">       *  注：该方法内部，最终会调用measureChildren（），从而 遍历所有子View &amp; 测量</span><br><span class="line">       **/</span><br><span class="line">            measureChildBeforeLayout(</span><br><span class="line"></span><br><span class="line">                   child, i, widthMeasureSpec, 0, heightMeasureSpec,</span><br><span class="line">                   totalWeight == 0 ? mTotalLength : 0);</span><br><span class="line">                   ...</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">      /**</span><br><span class="line">       *  步骤2：合并所有子View的尺寸大小,最终得到ViewGroup父视图的测量值（自身实现）</span><br><span class="line">       **/        </span><br><span class="line">              final int childHeight = child.getMeasuredHeight();</span><br><span class="line"></span><br><span class="line">              // 1. mTotalLength用于存储LinearLayout在竖直方向的高度</span><br><span class="line">              final int totalLength = mTotalLength;</span><br><span class="line"></span><br><span class="line">              // 2. 每测量一个子View的高度， mTotalLength就会增加</span><br><span class="line">              mTotalLength = Math.max(totalLength, totalLength + childHeight + lp.topMargin +</span><br><span class="line">                     lp.bottomMargin + getNextLocationOffset(child));</span><br><span class="line">      </span><br><span class="line">              // 3. 记录LinearLayout占用的总高度</span><br><span class="line">              // 即除了子View的高度，还有本身的padding属性值</span><br><span class="line">              mTotalLength += mPaddingTop + mPaddingBottom;</span><br><span class="line">              int heightSize = mTotalLength;</span><br><span class="line"></span><br><span class="line">      /**</span><br><span class="line">       *  步骤3：存储测量后View宽/高的值：调用setMeasuredDimension()  </span><br><span class="line">       **/ </span><br><span class="line">       setMeasureDimension(resolveSizeAndState(maxWidth,width))</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>至此，自定义View的中最重要、最复杂的measure过程讲解完毕。</p>
+<h4 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h4><p>本文对自定义View中最重要、最复杂的measure过程进行了详细分析，具体如下图：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi26.webp" alt="avatar"></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/01/自定义View-Measure过程/" rel="next" title="自定义View Measure过程">
+                <i class="fa fa-chevron-left"></i> 自定义View Measure过程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">25</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#measure过程详解"><span class="nav-number">1.</span> <span class="nav-text">measure过程详解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#单一View的measure过程"><span class="nav-number">2.</span> <span class="nav-text">单一View的measure过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#具体流程"><span class="nav-number">3.</span> <span class="nav-text">具体流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ViewGroup的measure过程"><span class="nav-number">5.</span> <span class="nav-text">ViewGroup的measure过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#原理"><span class="nav-number">6.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#流程"><span class="nav-number">7.</span> <span class="nav-text">流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结-1"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实例说明"><span class="nav-number">9.</span> <span class="nav-text">实例说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ViewGroup的measure过程实例解析（LinearLayout）"><span class="nav-number">10.</span> <span class="nav-text">ViewGroup的measure过程实例解析（LinearLayout）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结-2"><span class="nav-number">11.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
