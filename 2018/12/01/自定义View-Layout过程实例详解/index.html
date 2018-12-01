@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="实例讲解为了更好理解ViewGroup的layout过程（特别是复写onLayout（））下面，我将用2个实例来加深对ViewGroup layout过程的理解  系统提供的ViewGroup的子类：LinearLayout自定义View（继承了ViewGroup类）  实例解析1（LinearLayout）原理计算出LinearLayout本身在父布局的位置计算出LinearLayout中所有子">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自定义View Layout过程实例详解">
+<meta property="og:url" content="http://yoursite.com/2018/12/01/自定义View-Layout过程实例详解/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="实例讲解为了更好理解ViewGroup的layout过程（特别是复写onLayout（））下面，我将用2个实例来加深对ViewGroup layout过程的理解  系统提供的ViewGroup的子类：LinearLayout自定义View（继承了ViewGroup类）  实例解析1（LinearLayout）原理计算出LinearLayout本身在父布局的位置计算出LinearLayout中所有子">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi34.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi35.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi36.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi37.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi38.webp">
+<meta property="og:updated_time" content="2018-12-01T02:21:43.191Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="自定义View Layout过程实例详解">
+<meta name="twitter:description" content="实例讲解为了更好理解ViewGroup的layout过程（特别是复写onLayout（））下面，我将用2个实例来加深对ViewGroup layout过程的理解  系统提供的ViewGroup的子类：LinearLayout自定义View（继承了ViewGroup类）  实例解析1（LinearLayout）原理计算出LinearLayout本身在父布局的位置计算出LinearLayout中所有子">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi34.webp">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/12/01/自定义View-Layout过程实例详解/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>自定义View Layout过程实例详解 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/01/自定义View-Layout过程实例详解/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">自定义View Layout过程实例详解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-01 10:10:12 / 修改时间：10:21:43" itemprop="dateCreated datePublished" datetime="2018-12-01T10:10:12+08:00">2018-12-01</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="实例讲解"><a href="#实例讲解" class="headerlink" title="实例讲解"></a>实例讲解</h4><p>为了更好理解ViewGroup的layout过程（特别是复写onLayout（））<br>下面，我将用2个实例来加深对ViewGroup layout过程的理解</p>
+<blockquote>
+<p>系统提供的ViewGroup的子类：LinearLayout<br>自定义View（继承了ViewGroup类）</p>
+</blockquote>
+<h4 id="实例解析1（LinearLayout）"><a href="#实例解析1（LinearLayout）" class="headerlink" title="实例解析1（LinearLayout）"></a>实例解析1（LinearLayout）</h4><h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><p>计算出LinearLayout本身在父布局的位置<br>计算出LinearLayout中所有子View在容器中的位置</p>
+<p>具体流程</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi34.webp" alt="avatar"></p>
+<h4 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h4><p>在上述流程中，对于LinearLayout的layout（）的实现与上面所说是一样的，此处不作过多阐述<br>故直接进入LinearLayout复写的onLayout（）分析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 源码分析：LinearLayout复写的onLayout（）</span><br><span class="line">  * 注：复写的逻辑 和 LinearLayout measure过程的 onMeasure()类似</span><br><span class="line">  */ </span><br><span class="line">  @Override</span><br><span class="line">  protected void onLayout(boolean changed, int l, int t, int r, int b) &#123;</span><br><span class="line"></span><br><span class="line">      // 根据自身方向属性，而选择不同的处理方式</span><br><span class="line">      if (mOrientation == VERTICAL) &#123;</span><br><span class="line">          layoutVertical(l, t, r, b);</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">          layoutHorizontal(l, t, r, b);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">      // 由于垂直 / 水平方向类似，所以此处仅分析垂直方向（Vertical）的处理过程 -&gt;&gt;分析1</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：layoutVertical(l, t, r, b)</span><br><span class="line">  */</span><br><span class="line">    void layoutVertical(int left, int top, int right, int bottom) &#123;</span><br><span class="line">       </span><br><span class="line">        // 子View的数量</span><br><span class="line">        final int count = getVirtualChildCount();</span><br><span class="line"></span><br><span class="line">        // 1. 遍历子View</span><br><span class="line">        for (int i = 0; i &lt; count; i++) &#123;</span><br><span class="line">            final View child = getVirtualChildAt(i);</span><br><span class="line">            if (child == null) &#123;</span><br><span class="line">                childTop += measureNullChild(i);</span><br><span class="line">            &#125; else if (child.getVisibility() != GONE) &#123;</span><br><span class="line"></span><br><span class="line">                // 2. 计算子View的测量宽 / 高值</span><br><span class="line">                final int childWidth = child.getMeasuredWidth();</span><br><span class="line">                final int childHeight = child.getMeasuredHeight();</span><br><span class="line"></span><br><span class="line">                // 3. 确定自身子View的位置</span><br><span class="line">                // 即：递归调用子View的setChildFrame()，实际上是调用了子View的layout() -&gt;&gt;分析2</span><br><span class="line">                setChildFrame(child, childLeft, childTop + getLocationOffset(child),</span><br><span class="line">                        childWidth, childHeight);</span><br><span class="line"></span><br><span class="line">                // childTop逐渐增大，即后面的子元素会被放置在靠下的位置</span><br><span class="line">                // 这符合垂直方向的LinearLayout的特性</span><br><span class="line">                childTop += childHeight + lp.bottomMargin + getNextLocationOffset(child);</span><br><span class="line"></span><br><span class="line">                i += getChildrenSkipCount(child, i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析2：setChildFrame()</span><br><span class="line">  */</span><br><span class="line">    private void setChildFrame( View child, int left, int top, int width, int height)&#123;</span><br><span class="line">        </span><br><span class="line">        // setChildFrame（）仅仅只是调用了子View的layout（）而已</span><br><span class="line">        child.layout(left, top, left ++ width, top + height);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    // 在子View的layout（）又通过调用setFrame（）确定View的四个顶点</span><br><span class="line">    // 即确定了子View的位置</span><br><span class="line">    // 如此不断循环确定所有子View的位置，最终确定ViewGroup的位置</span><br></pre></td></tr></table></figure>
+<h4 id="实例解析2：自定义View"><a href="#实例解析2：自定义View" class="headerlink" title="实例解析2：自定义View"></a>实例解析2：自定义View</h4><p>上面讲的例子是系统提供的、已经封装好的ViewGroup子类：LinearLayout<br>但是，一般来说我们使用的都是自定义View；<br>接下来，我用一个简单的例子讲下自定义View的layout（）过程</p>
+<h4 id="实例视图说明"><a href="#实例视图说明" class="headerlink" title="实例视图说明"></a>实例视图说明</h4><p>实例视图 = 1个ViewGroup（灰色视图），包含1个黄色的子View，如下图：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi35.webp" alt="avatar"></p>
+<h4 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h4><p>计算出ViewGroup在父布局的位置<br>计算出ViewGroup中子View在容器中的位置</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi36.webp" alt="avatar"></p>
+<h4 id="具体计算逻辑"><a href="#具体计算逻辑" class="headerlink" title="具体计算逻辑"></a>具体计算逻辑</h4><p>具体计算逻辑是指计算子View的位置，即计算四顶点位置 = 计算Left、Top、Right和Bottom；<br>主要是写在复写的onLayout（）<br>计算公式如下：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi37.webp" alt="avatar"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">r = Left + width + Left；// 因左右间距一样</span><br><span class="line">b = Top + height + Top；// 因上下间距一样</span><br><span class="line"></span><br><span class="line">Left = (r - width) / 2；</span><br><span class="line">Top = (b - height) / 2；</span><br><span class="line"></span><br><span class="line">Right = width + Left;</span><br><span class="line">Bottom = height + Top;</span><br></pre></td></tr></table></figure>
+<h4 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h4><p>因为其余方法同上，这里不作过多描述，所以这里只分析复写的onLayout（）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">**</span><br><span class="line">  * 源码分析：LinearLayout复写的onLayout（）</span><br><span class="line">  * 注：复写的逻辑 和 LinearLayout measure过程的 onMeasure()类似</span><br><span class="line">  */ </span><br><span class="line">  @Override  </span><br><span class="line">protected void onLayout(boolean changed, int l, int t, int r, int b) &#123;  </span><br><span class="line"></span><br><span class="line">     // 参数说明</span><br><span class="line">     // changed 当前View的大小和位置改变了 </span><br><span class="line">     // left 左部位置</span><br><span class="line">     // top 顶部位置</span><br><span class="line">     // right 右部位置</span><br><span class="line">     // bottom 底部位置</span><br><span class="line"></span><br><span class="line">        // 1. 遍历子View：循环所有子View</span><br><span class="line">        // 注：本例中其实只有一个</span><br><span class="line">        for (int i=0; i&lt;getChildCount(); i++) &#123;</span><br><span class="line">            View child = getChildAt(i);</span><br><span class="line"></span><br><span class="line">            // 取出当前子View宽 / 高</span><br><span class="line">            int width = child.getMeasuredWidth();</span><br><span class="line">            int height = child.getMeasuredHeight();</span><br><span class="line"></span><br><span class="line">            // 2. 计算当前子View的四个位置值</span><br><span class="line">                // 2.1 位置的计算逻辑</span><br><span class="line">                int mLeft = (r - width) / 2;</span><br><span class="line">                int mTop = (b - height) / 2;</span><br><span class="line">                int mRight =  mLeft + width；</span><br><span class="line">                int mBottom =  mLeft + width；</span><br><span class="line"></span><br><span class="line">            // 3. 根据上述4个位置的计算值，设置子View的4个顶点</span><br><span class="line">            // 即确定了子View在父容器的位置</span><br><span class="line">            child.layout(mLeft, mTop, mRight,mBottom);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>布局文件如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span><br><span class="line">&lt;scut.carson_ho.layout_demo.Demo_ViewGroup xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    xmlns:tools=&quot;http://schemas.android.com/tools&quot;</span><br><span class="line">    android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">    android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">    android:background=&quot;#eee998&quot;</span><br><span class="line">    tools:context=&quot;scut.carson_ho.layout_demo.MainActivity&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;Button</span><br><span class="line">        android:text=&quot;ChildView&quot;</span><br><span class="line">        android:layout_width=&quot;200dip&quot;</span><br><span class="line">        android:layout_height=&quot;200dip&quot;</span><br><span class="line">        android:background=&quot;#333444&quot;</span><br><span class="line">        android:id=&quot;@+id/ChildView&quot; /&gt;</span><br><span class="line">&lt;/scut.carson_ho.layout_demo.Demo_ViewGroup &gt;</span><br></pre></td></tr></table></figure>
+<p>效果图</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi38.webp" alt="avatar"></p>
+<p>细节问题：getWidth() （ getHeight()）与 getMeasuredWidth() （getMeasuredHeight()）获取的宽 （高）有什么区别？<br>答：首先明确定义：</p>
+<p>getWidth() / getHeight()：获得View最终的宽 / 高<br>getMeasuredWidth() / getMeasuredHeight()：获得 View测量的宽 / 高<br>先看下各自的源码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">// 获得View测量的宽 / 高</span><br><span class="line">  public final int getMeasuredWidth() &#123;  </span><br><span class="line">      return mMeasuredWidth &amp; MEASURED_SIZE_MASK;  </span><br><span class="line">      // measure过程中返回的mMeasuredWidth</span><br><span class="line">  &#125;  </span><br><span class="line"></span><br><span class="line">  public final int getMeasuredHeight() &#123;  </span><br><span class="line">      return mMeasuredHeight &amp; MEASURED_SIZE_MASK;  </span><br><span class="line">      // measure过程中返回的mMeasuredHeight</span><br><span class="line">  &#125;  </span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 获得View最终的宽 / 高</span><br><span class="line">  public final int getWidth() &#123;  </span><br><span class="line">      return mRight - mLeft;  </span><br><span class="line">      // View最终的宽 = 子View的右边界 - 子view的左边界。</span><br><span class="line">  &#125;  </span><br><span class="line"></span><br><span class="line">  public final int getHeight() &#123;  </span><br><span class="line">      return mBottom - mTop;  </span><br><span class="line">     // View最终的高 = 子View的下边界 - 子view的上边界。</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>：一般情况下，二者获取的宽 / 高是相等的</p>
+<p><strong>结论</strong><br>在非人为设置的情况下，View的最终宽/高（getWidth() / getHeight()）<br>与 View的测量宽/高 （getMeasuredWidth() /  getMeasuredHeight()）永远是相等</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/01/自定义View-Layout过程/" rel="next" title="自定义View Layout过程">
+                <i class="fa fa-chevron-left"></i> 自定义View Layout过程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">27</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#实例讲解"><span class="nav-number">1.</span> <span class="nav-text">实例讲解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实例解析1（LinearLayout）"><span class="nav-number">2.</span> <span class="nav-text">实例解析1（LinearLayout）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#原理"><span class="nav-number">3.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#源码分析"><span class="nav-number">4.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实例解析2：自定义View"><span class="nav-number">5.</span> <span class="nav-text">实例解析2：自定义View</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实例视图说明"><span class="nav-number">6.</span> <span class="nav-text">实例视图说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#原理-1"><span class="nav-number">7.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#具体计算逻辑"><span class="nav-number">8.</span> <span class="nav-text">具体计算逻辑</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码分析"><span class="nav-number">9.</span> <span class="nav-text">代码分析</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

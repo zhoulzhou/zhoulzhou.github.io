@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="目录 作用计算视图（View）的位置 即计算View的四个顶点位置：Left、Top、Right 和 Bottom layout过程详解类似measure过程，layout过程根据View的类型分为2种情况：  接下来，我将详细分析这2种情况下的layout过程 单一View的layout过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自定义View Layout过程">
+<meta property="og:url" content="http://yoursite.com/2018/12/01/自定义View-Layout过程/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="目录 作用计算视图（View）的位置 即计算View的四个顶点位置：Left、Top、Right 和 Bottom layout过程详解类似measure过程，layout过程根据View的类型分为2种情况：  接下来，我将详细分析这2种情况下的layout过程 单一View的layout过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi27.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi28.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi29.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi30.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi31.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi32.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi33.webp">
+<meta property="og:updated_time" content="2018-12-01T02:06:02.690Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="自定义View Layout过程">
+<meta name="twitter:description" content="目录 作用计算视图（View）的位置 即计算View的四个顶点位置：Left、Top、Right 和 Bottom layout过程详解类似measure过程，layout过程根据View的类型分为2种情况：  接下来，我将详细分析这2种情况下的layout过程 单一View的layout过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi27.webp">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/12/01/自定义View-Layout过程/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>自定义View Layout过程 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/01/自定义View-Layout过程/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">自定义View Layout过程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-01 09:52:55 / 修改时间：10:06:02" itemprop="dateCreated datePublished" datetime="2018-12-01T09:52:55+08:00">2018-12-01</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h4><p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi27.webp" alt="avatar"></p>
+<h4 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h4><p>计算视图（View）的位置 即计算View的四个顶点位置：Left、Top、Right 和 Bottom</p>
+<h4 id="layout过程详解"><a href="#layout过程详解" class="headerlink" title="layout过程详解"></a>layout过程详解</h4><p>类似measure过程，layout过程根据View的类型分为2种情况：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi28.webp" alt="avatar"></p>
+<p>接下来，我将详细分析这2种情况下的layout过程</p>
+<h4 id="单一View的layout过程"><a href="#单一View的layout过程" class="headerlink" title="单一View的layout过程"></a>单一View的layout过程</h4><p><strong>应用场景</strong><br>在无现成的控件View满足需求、需自己实现时，则使用自定义单一View</p>
+<blockquote>
+<p>如：制作一个支持加载网络图片的ImageView控件<br>注：自定义View在多数情况下都有替代方案：图片 / 组合动画，但二者可能会导致内存耗费过大，从而引起内存溢出等问题。</p>
+</blockquote>
+<p><strong>具体使用</strong><br>继承自View、SurfaceView 或 其他View；不包含子View</p>
+<h4 id="具体流程"><a href="#具体流程" class="headerlink" title="具体流程"></a>具体流程</h4><p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi29.webp" alt="avatar"></p>
+<p>下面我将一个个方法进行详细分析</p>
+<h4 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h4><p>layout过程的入口 = layout（），具体如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">**</span><br><span class="line">  * 源码分析：layout（）</span><br><span class="line">  * 作用：确定View本身的位置，即设置View本身的四个顶点位置</span><br><span class="line">  */ </span><br><span class="line">  public void layout(int l, int t, int r, int b) &#123;  </span><br><span class="line"></span><br><span class="line">    // 当前视图的四个顶点</span><br><span class="line">    int oldL = mLeft;  </span><br><span class="line">    int oldT = mTop;  </span><br><span class="line">    int oldB = mBottom;  </span><br><span class="line">    int oldR = mRight;  </span><br><span class="line">      </span><br><span class="line">    // 1. 确定View的位置：setFrame（） / setOpticalFrame（）</span><br><span class="line">    // 即初始化四个顶点的值、判断当前View大小和位置是否发生了变化 &amp; 返回 </span><br><span class="line">    // -&gt;&gt;分析1、分析2</span><br><span class="line">    boolean changed = isLayoutModeOptical(mParent) ?</span><br><span class="line">            setOpticalFrame(l, t, r, b) : setFrame(l, t, r, b);</span><br><span class="line"></span><br><span class="line">    // 2. 若视图的大小 &amp; 位置发生变化</span><br><span class="line">    // 会重新确定该View所有的子View在父容器的位置：onLayout（）</span><br><span class="line">    if (changed || (mPrivateFlags &amp; PFLAG_LAYOUT_REQUIRED) == PFLAG_LAYOUT_REQUIRED) &#123;  </span><br><span class="line"></span><br><span class="line">        onLayout(changed, l, t, r, b);  </span><br><span class="line">        // 对于单一View的laytou过程：由于单一View是没有子View的，故onLayout（）是一个空实现-&gt;&gt;分析3</span><br><span class="line">        // 对于ViewGroup的laytou过程：由于确定位置与具体布局有关，所以onLayout（）在ViewGroup为1个抽象方法，需重写实现（后面会详细说）</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：setFrame（）</span><br><span class="line">  * 作用：根据传入的4个位置值，设置View本身的四个顶点位置</span><br><span class="line">  * 即：最终确定View本身的位置</span><br><span class="line">  */ </span><br><span class="line">  protected boolean setFrame(int left, int top, int right, int bottom) &#123;</span><br><span class="line">        ...</span><br><span class="line">    // 通过以下赋值语句记录下了视图的位置信息，即确定View的四个顶点</span><br><span class="line">    // 从而确定了视图的位置</span><br><span class="line">    mLeft = left;</span><br><span class="line">    mTop = top;</span><br><span class="line">    mRight = right;</span><br><span class="line">    mBottom = bottom;</span><br><span class="line"></span><br><span class="line">    mRenderNode.setLeftTopRightBottom(mLeft, mTop, mRight, mBottom);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析2：setOpticalFrame（）</span><br><span class="line">  * 作用：根据传入的4个位置值，设置View本身的四个顶点位置</span><br><span class="line">  * 即：最终确定View本身的位置</span><br><span class="line">  */ </span><br><span class="line">  private boolean setOpticalFrame(int left, int top, int right, int bottom) &#123;</span><br><span class="line"></span><br><span class="line">        Insets parentInsets = mParent instanceof View ?</span><br><span class="line">                ((View) mParent).getOpticalInsets() : Insets.NONE;</span><br><span class="line"></span><br><span class="line">        Insets childInsets = getOpticalInsets();</span><br><span class="line"></span><br><span class="line">        // 内部实际上是调用setFrame（）</span><br><span class="line">        return setFrame(</span><br><span class="line">                left   + parentInsets.left - childInsets.left,</span><br><span class="line">                top    + parentInsets.top  - childInsets.top,</span><br><span class="line">                right  + parentInsets.left + childInsets.right,</span><br><span class="line">                bottom + parentInsets.top  + childInsets.bottom);</span><br><span class="line">    &#125;</span><br><span class="line">    // 回到调用原处</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析3：onLayout（）</span><br><span class="line">  * 注：对于单一View的laytou过程</span><br><span class="line">  *    a. 由于单一View是没有子View的，故onLayout（）是一个空实现</span><br><span class="line">  *    b. 由于在layout（）中已经对自身View进行了位置计算，所以单一View的layout过程在layout（）后就已完成了</span><br><span class="line">  */ </span><br><span class="line"> protected void onLayout(boolean changed, int left, int top, int right, int bottom) &#123;</span><br><span class="line"></span><br><span class="line">   // 参数说明</span><br><span class="line">   // changed 当前View的大小和位置改变了 </span><br><span class="line">   // left 左部位置</span><br><span class="line">   // top 顶部位置</span><br><span class="line">   // right 右部位置</span><br><span class="line">   // bottom 底部位置</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至此，单一View的layout过程已分析完毕。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>单一View的layout过程解析如下：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi30.webp" alt="avatar"></p>
+<h4 id="ViewGroup的layout过程"><a href="#ViewGroup的layout过程" class="headerlink" title="ViewGroup的layout过程"></a>ViewGroup的layout过程</h4><p><strong>应用场景</strong><br>利用现有的组件根据特定的布局方式来组成新的组件</p>
+<p><strong>具体使用</strong><br>继承自ViewGroup 或 各种Layout；含有子 View</p>
+<p><strong>原理（步骤）</strong></p>
+<blockquote>
+<p>计算自身ViewGroup的位置：layout（）<br>遍历子View &amp; 确定自身子View在ViewGroup的位置（调用子View 的 layout（））：onLayout（）<br>自上而下、一层层地传递下去，直到完成整个View树的layout（）过程</p>
+</blockquote>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi31.webp" alt="avatar"></p>
+<p>流程</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi32.webp" alt="avatar"></p>
+<p><strong>此处需注意：</strong><br>ViewGroup 和 View 同样拥有layout（）和onLayout()，但二者不同的：</p>
+<blockquote>
+<p>一开始计算ViewGroup位置时，调用的是ViewGroup的layout（）和onLayout()；<br>当开始遍历子View &amp; 计算子View位置时，调用的是子View的layout（）和onLayout()</p>
+</blockquote>
+<p>下面我将一个个方法进行详细分析：layout过程入口为layout（）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 源码分析：layout（）</span><br><span class="line">  * 作用：确定View本身的位置，即设置View本身的四个顶点位置</span><br><span class="line">  * 注：与单一View的layout（）源码一致</span><br><span class="line">  */ </span><br><span class="line">  public void layout(int l, int t, int r, int b) &#123;  </span><br><span class="line"></span><br><span class="line">    // 当前视图的四个顶点</span><br><span class="line">    int oldL = mLeft;  </span><br><span class="line">    int oldT = mTop;  </span><br><span class="line">    int oldB = mBottom;  </span><br><span class="line">    int oldR = mRight;  </span><br><span class="line">      </span><br><span class="line">    // 1. 确定View的位置：setFrame（） / setOpticalFrame（）</span><br><span class="line">    // 即初始化四个顶点的值、判断当前View大小和位置是否发生了变化 &amp; 返回 </span><br><span class="line">    // -&gt;&gt;分析1、分析2</span><br><span class="line">    boolean changed = isLayoutModeOptical(mParent) ?</span><br><span class="line">            setOpticalFrame(l, t, r, b) : setFrame(l, t, r, b);</span><br><span class="line"></span><br><span class="line">    // 2. 若视图的大小 &amp; 位置发生变化</span><br><span class="line">    // 会重新确定该View所有的子View在父容器的位置：onLayout（）</span><br><span class="line">    if (changed || (mPrivateFlags &amp; PFLAG_LAYOUT_REQUIRED) == PFLAG_LAYOUT_REQUIRED) &#123;  </span><br><span class="line"></span><br><span class="line">        onLayout(changed, l, t, r, b);  </span><br><span class="line">        // 对于单一View的laytou过程：由于单一View是没有子View的，故onLayout（）是一个空实现（上面已分析完毕）</span><br><span class="line">        // 对于ViewGroup的laytou过程：由于确定位置与具体布局有关，所以onLayout（）在ViewGroup为1个抽象方法，需重写实现 -&gt;&gt;分析3</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：setFrame（）</span><br><span class="line">  * 作用：确定View本身的位置，即设置View本身的四个顶点位置</span><br><span class="line">  */ </span><br><span class="line">  protected boolean setFrame(int left, int top, int right, int bottom) &#123;</span><br><span class="line">        ...</span><br><span class="line">    // 通过以下赋值语句记录下了视图的位置信息，即确定View的四个顶点</span><br><span class="line">    // 从而确定了视图的位置</span><br><span class="line">    mLeft = left;</span><br><span class="line">    mTop = top;</span><br><span class="line">    mRight = right;</span><br><span class="line">    mBottom = bottom;</span><br><span class="line"></span><br><span class="line">    mRenderNode.setLeftTopRightBottom(mLeft, mTop, mRight, mBottom);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析2：setOpticalFrame（）</span><br><span class="line">  * 作用：确定View本身的位置，即设置View本身的四个顶点位置</span><br><span class="line">  */ </span><br><span class="line">  private boolean setOpticalFrame(int left, int top, int right, int bottom) &#123;</span><br><span class="line"></span><br><span class="line">        Insets parentInsets = mParent instanceof View ?</span><br><span class="line">                ((View) mParent).getOpticalInsets() : Insets.NONE;</span><br><span class="line"></span><br><span class="line">        Insets childInsets = getOpticalInsets();</span><br><span class="line"></span><br><span class="line">        // 内部实际上是调用setFrame（）</span><br><span class="line">        return setFrame(</span><br><span class="line">                left   + parentInsets.left - childInsets.left,</span><br><span class="line">                top    + parentInsets.top  - childInsets.top,</span><br><span class="line">                right  + parentInsets.left + childInsets.right,</span><br><span class="line">                bottom + parentInsets.top  + childInsets.bottom);</span><br><span class="line">    &#125;</span><br><span class="line">    // 回到调用原处</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析3：onLayout（）</span><br><span class="line">  * 作用：计算该ViewGroup包含所有的子View在父容器的位置（）</span><br><span class="line">  * 注： </span><br><span class="line">  *      a. 定义为抽象方法，需重写，因：子View的确定位置与具体布局有关，所以onLayout（）在ViewGroup没有实现</span><br><span class="line">  *      b. 在自定义ViewGroup时必须复写onLayout（）！！！！！</span><br><span class="line">  *      c. 复写原理：遍历子View 、计算当前子View的四个位置值 &amp; 确定自身子View的位置（调用子View layout（））</span><br><span class="line">  */ </span><br><span class="line">  protected void onLayout(boolean changed, int left, int top, int right, int bottom) &#123;</span><br><span class="line"></span><br><span class="line">     // 参数说明</span><br><span class="line">     // changed 当前View的大小和位置改变了 </span><br><span class="line">     // left 左部位置</span><br><span class="line">     // top 顶部位置</span><br><span class="line">     // right 右部位置</span><br><span class="line">     // bottom 底部位置</span><br><span class="line"></span><br><span class="line">     // 1. 遍历子View：循环所有子View</span><br><span class="line">          for (int i=0; i&lt;getChildCount(); i++) &#123;</span><br><span class="line">              View child = getChildAt(i);   </span><br><span class="line"></span><br><span class="line">              // 2. 计算当前子View的四个位置值</span><br><span class="line">                // 2.1 位置的计算逻辑</span><br><span class="line">                ...// 需自己实现，也是自定义View的关键</span><br><span class="line"></span><br><span class="line">                // 2.2 对计算后的位置值进行赋值</span><br><span class="line">                int mLeft  = Left</span><br><span class="line">                int mTop  = Top</span><br><span class="line">                int mRight = Right</span><br><span class="line">                int mBottom = Bottom</span><br><span class="line"></span><br><span class="line">              // 3. 根据上述4个位置的计算值，设置子View的4个顶点：调用子view的layout() &amp; 传递计算过的参数</span><br><span class="line">              // 即确定了子View在父容器的位置</span><br><span class="line">              child.layout(mLeft, mTop, mRight, mBottom);</span><br><span class="line">              // 该过程类似于单一View的layout过程中的layout（）和onLayout（），此处不作过多描述</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h4><p>对于ViewGroup的layout过程，如下：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi33.webp" alt="avatar"></p>
+<p>至此，ViewGroup的 layout过程已讲解完毕。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/01/自定义View-Measure过程详解/" rel="next" title="自定义View Measure过程详解">
+                <i class="fa fa-chevron-left"></i> 自定义View Measure过程详解
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/01/自定义View-Layout过程实例详解/" rel="prev" title="自定义View Layout过程实例详解">
+                自定义View Layout过程实例详解 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">27</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#目录"><span class="nav-number">1.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#作用"><span class="nav-number">2.</span> <span class="nav-text">作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#layout过程详解"><span class="nav-number">3.</span> <span class="nav-text">layout过程详解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#单一View的layout过程"><span class="nav-number">4.</span> <span class="nav-text">单一View的layout过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#具体流程"><span class="nav-number">5.</span> <span class="nav-text">具体流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#源码分析"><span class="nav-number">6.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ViewGroup的layout过程"><span class="nav-number">8.</span> <span class="nav-text">ViewGroup的layout过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结-1"><span class="nav-number">9.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
