@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="目录 作用绘制View视图 draw过程详解类似measure过程、layout过程，draw过程根据View的类型分为2种情况：  接下来，我将详细分析这2种情况下的draw过程 单一View的draw过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络图片的ImageView控件注：自定义View在多数情况下都有替代方案：图片 / 组合">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自定义View Draw过程">
+<meta property="og:url" content="http://yoursite.com/2018/12/01/自定义View-Draw过程/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="目录 作用绘制View视图 draw过程详解类似measure过程、layout过程，draw过程根据View的类型分为2种情况：  接下来，我将详细分析这2种情况下的draw过程 单一View的draw过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络图片的ImageView控件注：自定义View在多数情况下都有替代方案：图片 / 组合">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi39.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi40.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi41.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi42.webp">
+<meta property="og:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi43.webp">
+<meta property="og:updated_time" content="2018-12-01T02:37:51.336Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="自定义View Draw过程">
+<meta name="twitter:description" content="目录 作用绘制View视图 draw过程详解类似measure过程、layout过程，draw过程根据View的类型分为2种情况：  接下来，我将详细分析这2种情况下的draw过程 单一View的draw过程应用场景在无现成的控件View满足需求、需自己实现时，则使用自定义单一View  如：制作一个支持加载网络图片的ImageView控件注：自定义View在多数情况下都有替代方案：图片 / 组合">
+<meta name="twitter:image" content="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi39.webp">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/12/01/自定义View-Draw过程/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>自定义View Draw过程 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/01/自定义View-Draw过程/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">自定义View Draw过程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-01 10:26:11 / 修改时间：10:37:51" itemprop="dateCreated datePublished" datetime="2018-12-01T10:26:11+08:00">2018-12-01</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h4><p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi39.webp" alt="avatar"></p>
+<p><strong>作用</strong><br>绘制View视图</p>
+<p><strong>draw过程详解</strong><br>类似measure过程、layout过程，draw过程根据View的类型分为2种情况：</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi40.webp" alt="avatar"></p>
+<p>接下来，我将详细分析这2种情况下的draw过程</p>
+<h4 id="单一View的draw过程"><a href="#单一View的draw过程" class="headerlink" title="单一View的draw过程"></a>单一View的draw过程</h4><p><strong>应用场景</strong><br>在无现成的控件View满足需求、需自己实现时，则使用自定义单一View</p>
+<blockquote>
+<p>如：制作一个支持加载网络图片的ImageView控件<br>注：自定义View在多数情况下都有替代方案：图片 / 组合动画，但二者可能会导致内存耗费过大，从而引起内存溢出等问题。</p>
+</blockquote>
+<p><strong>具体使用</strong><br>继承自View、SurfaceView 或 其他View；不包含子View</p>
+<h4 id="原理（步骤）"><a href="#原理（步骤）" class="headerlink" title="原理（步骤）"></a>原理（步骤）</h4><p>View绘制自身（含背景、内容）；<br>绘制装饰（滚动指示器、滚动条、和前景）</p>
+<p><strong>具体流程</strong></p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi41.webp" alt="avatar"></p>
+<p>下面我将一个个方法进行详细分析：draw过程的入口 = draw（）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 源码分析：draw（）</span><br><span class="line">  * 作用：根据给定的 Canvas 自动渲染 View（包括其所有子 View）。</span><br><span class="line">  * 绘制过程：</span><br><span class="line">  *   1. 绘制view背景</span><br><span class="line">  *   2. 绘制view内容</span><br><span class="line">  *   3. 绘制子View</span><br><span class="line">  *   4. 绘制装饰（渐变框，滑动条等等）</span><br><span class="line">  * 注：</span><br><span class="line">  *    a. 在调用该方法之前必须要完成 layout 过程</span><br><span class="line">  *    b. 所有的视图最终都是调用 View 的 draw （）绘制视图（ ViewGroup 没有复写此方法）</span><br><span class="line">  *    c. 在自定义View时，不应该复写该方法，而是复写 onDraw(Canvas) 方法进行绘制</span><br><span class="line">  *    d. 若自定义的视图确实要复写该方法，那么需先调用 super.draw(canvas)完成系统的绘制，然后再进行自定义的绘制</span><br><span class="line">  */ </span><br><span class="line">  public void draw(Canvas canvas) &#123;</span><br><span class="line"></span><br><span class="line">    ...// 仅贴出关键代码</span><br><span class="line">  </span><br><span class="line">    int saveCount;</span><br><span class="line"></span><br><span class="line">    // 步骤1： 绘制本身View背景</span><br><span class="line">        if (!dirtyOpaque) &#123;</span><br><span class="line">            drawBackground(canvas);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    // 若有必要，则保存图层（还有一个复原图层）</span><br><span class="line">    // 优化技巧：当不需绘制 Layer 时，“保存图层“和“复原图层“这两步会跳过</span><br><span class="line">    // 因此在绘制时，节省 layer 可以提高绘制效率</span><br><span class="line">    final int viewFlags = mViewFlags;</span><br><span class="line">    if (!verticalEdges &amp;&amp; !horizontalEdges) &#123;</span><br><span class="line"></span><br><span class="line">    // 步骤2：绘制本身View内容</span><br><span class="line">        if (!dirtyOpaque) </span><br><span class="line">            onDraw(canvas);</span><br><span class="line">        // View 中：默认为空实现，需复写</span><br><span class="line">        // ViewGroup中：需复写</span><br><span class="line"></span><br><span class="line">    // 步骤3：绘制子View</span><br><span class="line">    // 由于单一View无子View，故View 中：默认为空实现</span><br><span class="line">    // ViewGroup中：系统已经复写好对其子视图进行绘制我们不需要复写</span><br><span class="line">        dispatchDraw(canvas);</span><br><span class="line">        </span><br><span class="line">    // 步骤4：绘制装饰，如滑动条、前景色等等</span><br><span class="line">        onDrawScrollBars(canvas);</span><br><span class="line"></span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    ...    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面，我们继续分析在draw（）中4个步骤调用的drawBackground（）、  onDraw()、dispatchDraw()、onDrawScrollBars(canvas)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 步骤1：drawBackground(canvas)</span><br><span class="line">  * 作用：绘制View本身的背景</span><br><span class="line">  */</span><br><span class="line">  private void drawBackground(Canvas canvas) &#123;</span><br><span class="line">        // 获取背景 drawable</span><br><span class="line">        final Drawable background = mBackground;</span><br><span class="line">        if (background == null) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        // 根据在 layout 过程中获取的 View 的位置参数，来设置背景的边界</span><br><span class="line">        setBackgroundBounds();</span><br><span class="line"></span><br><span class="line">        .....</span><br><span class="line"></span><br><span class="line">        // 获取 mScrollX 和 mScrollY值 </span><br><span class="line">        final int scrollX = mScrollX;</span><br><span class="line">        final int scrollY = mScrollY;</span><br><span class="line">        if ((scrollX | scrollY) == 0) &#123;</span><br><span class="line">            background.draw(canvas);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            // 若 mScrollX 和 mScrollY 有值，则对 canvas 的坐标进行偏移</span><br><span class="line">            canvas.translate(scrollX, scrollY);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            // 调用 Drawable 的 draw 方法绘制背景</span><br><span class="line">            background.draw(canvas);</span><br><span class="line">            canvas.translate(-scrollX, -scrollY);</span><br><span class="line">        &#125;</span><br><span class="line">   &#125; </span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 步骤2：onDraw(canvas)</span><br><span class="line">  * 作用：绘制View本身的内容</span><br><span class="line">  * 注：</span><br><span class="line">  *   a. 由于 View 的内容各不相同，所以该方法是一个空实现</span><br><span class="line">  *   b. 在自定义绘制过程中，需由子类去实现复写该方法，从而绘制自身的内容</span><br><span class="line">  *   c. 谨记：自定义View中 必须 且 只需复写onDraw（）</span><br><span class="line">  */</span><br><span class="line">  protected void onDraw(Canvas canvas) &#123;</span><br><span class="line">      </span><br><span class="line">        ... // 复写从而实现绘制逻辑</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 步骤3： dispatchDraw(canvas)</span><br><span class="line">  * 作用：绘制子View</span><br><span class="line">  * 注：由于单一View中无子View，故为空实现</span><br><span class="line">  */</span><br><span class="line">  protected void dispatchDraw(Canvas canvas) &#123;</span><br><span class="line"></span><br><span class="line">        ... // 空实现</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 步骤4： onDrawScrollBars(canvas)</span><br><span class="line">  * 作用：绘制装饰，如 滚动指示器、滚动条、和前景等</span><br><span class="line">  */</span><br><span class="line">  public void onDrawForeground(Canvas canvas) &#123;</span><br><span class="line">        onDrawScrollIndicators(canvas);</span><br><span class="line">        onDrawScrollBars(canvas);</span><br><span class="line"></span><br><span class="line">        final Drawable foreground = mForegroundInfo != null ? mForegroundInfo.mDrawable : null;</span><br><span class="line">        if (foreground != null) &#123;</span><br><span class="line">            if (mForegroundInfo.mBoundsChanged) &#123;</span><br><span class="line">                mForegroundInfo.mBoundsChanged = false;</span><br><span class="line">                final Rect selfBounds = mForegroundInfo.mSelfBounds;</span><br><span class="line">                final Rect overlayBounds = mForegroundInfo.mOverlayBounds;</span><br><span class="line"></span><br><span class="line">                if (mForegroundInfo.mInsidePadding) &#123;</span><br><span class="line">                    selfBounds.set(0, 0, getWidth(), getHeight());</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    selfBounds.set(getPaddingLeft(), getPaddingTop(),</span><br><span class="line">                            getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                final int ld = getLayoutDirection();</span><br><span class="line">                Gravity.apply(mForegroundInfo.mGravity, foreground.getIntrinsicWidth(),</span><br><span class="line">                        foreground.getIntrinsicHeight(), selfBounds, overlayBounds, ld);</span><br><span class="line">                foreground.setBounds(overlayBounds);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            foreground.draw(canvas);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>至此，单一View的draw过程已分析完毕。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>单一View的draw过程解析如下：</p>
+<blockquote>
+<p>即 只需绘制View自身</p>
+</blockquote>
+<h4 id="ViewGroup的draw过程"><a href="#ViewGroup的draw过程" class="headerlink" title="ViewGroup的draw过程"></a>ViewGroup的draw过程</h4><p><strong>应用场景</strong><br>利用现有的组件根据特定的布局方式来组成新的组件</p>
+<p><strong>具体使用</strong><br>继承自ViewGroup 或 各种Layout；含有子 View</p>
+<h4 id="原理（步骤）-1"><a href="#原理（步骤）-1" class="headerlink" title="原理（步骤）"></a>原理（步骤）</h4><blockquote>
+<p>ViewGroup绘制自身（含背景、内容）；<br>ViewGroup遍历子View &amp; 绘制其所有子View；类似于单一View的draw过程<br>ViewGroup绘制装饰（滚动指示器、滚动条、和前景）<br>自上而下、一层层地传递下去，直到完成整个View树的draw过程</p>
+</blockquote>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi42.webp" alt="avatar"></p>
+<p>具体流程</p>
+<p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/zi43.webp" alt="avatar"></p>
+<p>下面我将对每个步骤和方法进行详细分析：draw过程的入口 = draw（）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">  * 源码分析：draw（）</span><br><span class="line">  * 与单一View的draw（）流程类似</span><br><span class="line">  * 作用：根据给定的 Canvas 自动渲染 View（包括其所有子 View）</span><br><span class="line">  * 绘制过程：</span><br><span class="line">  *   1. 绘制view背景</span><br><span class="line">  *   2. 绘制view内容</span><br><span class="line">  *   3. 绘制子View</span><br><span class="line">  *   4. 绘制装饰（渐变框，滑动条等等）</span><br><span class="line">  * 注：</span><br><span class="line">  *    a. 在调用该方法之前必须要完成 layout 过程</span><br><span class="line">  *    b. 所有的视图最终都是调用 View 的 draw （）绘制视图（ ViewGroup 没有复写此方法）</span><br><span class="line">  *    c. 在自定义View时，不应该复写该方法，而是复写 onDraw(Canvas) 方法进行绘制</span><br><span class="line">  *    d. 若自定义的视图确实要复写该方法，那么需先调用 super.draw(canvas)完成系统的绘制，然后再进行自定义的绘制</span><br><span class="line">  */ </span><br><span class="line">  public void draw(Canvas canvas) &#123;</span><br><span class="line"></span><br><span class="line">    ...// 仅贴出关键代码</span><br><span class="line">  </span><br><span class="line">    int saveCount;</span><br><span class="line"></span><br><span class="line">    // 步骤1： 绘制本身View背景</span><br><span class="line">        if (!dirtyOpaque) &#123;</span><br><span class="line">            drawBackground(canvas);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    // 若有必要，则保存图层（还有一个复原图层）</span><br><span class="line">    // 优化技巧：当不需绘制 Layer 时，“保存图层“和“复原图层“这两步会跳过</span><br><span class="line">    // 因此在绘制时，节省 layer 可以提高绘制效率</span><br><span class="line">    final int viewFlags = mViewFlags;</span><br><span class="line">    if (!verticalEdges &amp;&amp; !horizontalEdges) &#123;</span><br><span class="line"></span><br><span class="line">    // 步骤2：绘制本身View内容</span><br><span class="line">        if (!dirtyOpaque) </span><br><span class="line">            onDraw(canvas);</span><br><span class="line">        // View 中：默认为空实现，需复写</span><br><span class="line">        // ViewGroup中：需复写</span><br><span class="line"></span><br><span class="line">    // 步骤3：绘制子View</span><br><span class="line">    // ViewGroup中：系统已复写好对其子视图进行绘制，不需复写</span><br><span class="line">        dispatchDraw(canvas);</span><br><span class="line">        </span><br><span class="line">    // 步骤4：绘制装饰，如滑动条、前景色等等</span><br><span class="line">        onDrawScrollBars(canvas);</span><br><span class="line"></span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    ...    </span><br><span class="line">&#125;</span><br><span class="line">由于 步骤2：drawBackground（）、步骤3：onDraw（）、步骤5：onDrawForeground（），与单一View的draw过程类似，此处不作过多描述</span><br><span class="line"></span><br><span class="line">下面直接进入与单一View draw过程最大不同的步骤4：dispatchDraw()</span><br><span class="line">/**</span><br><span class="line">  * 源码分析：dispatchDraw（）</span><br><span class="line">  * 作用：遍历子View &amp; 绘制子View</span><br><span class="line">  * 注：</span><br><span class="line">  *   a. ViewGroup中：由于系统为我们实现了该方法，故不需重写该方法</span><br><span class="line">  *   b. View中默认为空实现（因为没有子View可以去绘制）</span><br><span class="line">  */ </span><br><span class="line">    protected void dispatchDraw(Canvas canvas) &#123;</span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">         // 1. 遍历子View</span><br><span class="line">        final int childrenCount = mChildrenCount;</span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        for (int i = 0; i &lt; childrenCount; i++) &#123;</span><br><span class="line">                ......</span><br><span class="line">                if ((transientChild.mViewFlags &amp; VISIBILITY_MASK) == VISIBLE ||</span><br><span class="line">                        transientChild.getAnimation() != null) &#123;</span><br><span class="line">                  // 2. 绘制子View视图 -&gt;&gt;分析1</span><br><span class="line">                    more |= drawChild(canvas, transientChild, drawingTime);</span><br><span class="line">                &#125;</span><br><span class="line">                ....</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line">  * 分析1：drawChild（）</span><br><span class="line">  * 作用：绘制子View</span><br><span class="line">  */</span><br><span class="line">    protected boolean drawChild(Canvas canvas, View child, long drawingTime) &#123;</span><br><span class="line">        // 最终还是调用了子 View 的 draw （）进行子View的绘制</span><br><span class="line">        return child.draw(canvas, this, drawingTime);</span><br></pre></td></tr></table></figure>
+<p>至此，ViewGroup的draw过程已分析完毕。</p>
+<h4 id="其他细节问题：View-setWillNotDraw"><a href="#其他细节问题：View-setWillNotDraw" class="headerlink" title="其他细节问题：View.setWillNotDraw()"></a>其他细节问题：View.setWillNotDraw()</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">**</span><br><span class="line">  * 源码分析：setWillNotDraw()</span><br><span class="line">  * 定义：View 中的特殊方法</span><br><span class="line">  * 作用：设置 WILL_NOT_DRAW 标记位；</span><br><span class="line">  * 注：</span><br><span class="line">  *   a. 该标记位的作用是：当一个View不需要绘制内容时，系统进行相应优化</span><br><span class="line">  *   b. 默认情况下：View 不启用该标记位（设置为false）；ViewGroup 默认启用（设置为true）</span><br><span class="line">  */ </span><br><span class="line"></span><br><span class="line">public void setWillNotDraw(boolean willNotDraw) &#123;</span><br><span class="line"></span><br><span class="line">    setFlags(willNotDraw ? WILL_NOT_DRAW : 0, DRAW_MASK);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 应用场景</span><br><span class="line">// a. setWillNotDraw参数设置为true：当自定义View继承自 ViewGroup 、且本身并不具备任何绘制时，设置为 true 后，系统会进行相应的优化。</span><br><span class="line">// b. setWillNotDraw参数设置为false：当自定义View继承自 ViewGroup 、且需要绘制内容时，那么设置为 false，来关闭 WILL_NOT_DRAW 这个标记位。</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/01/自定义View-Layout过程实例详解/" rel="next" title="自定义View Layout过程实例详解">
+                <i class="fa fa-chevron-left"></i> 自定义View Layout过程实例详解
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">28</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#目录"><span class="nav-number">1.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#单一View的draw过程"><span class="nav-number">2.</span> <span class="nav-text">单一View的draw过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#原理（步骤）"><span class="nav-number">3.</span> <span class="nav-text">原理（步骤）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ViewGroup的draw过程"><span class="nav-number">5.</span> <span class="nav-text">ViewGroup的draw过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#原理（步骤）-1"><span class="nav-number">6.</span> <span class="nav-text">原理（步骤）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他细节问题：View-setWillNotDraw"><span class="nav-number">7.</span> <span class="nav-text">其他细节问题：View.setWillNotDraw()</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
