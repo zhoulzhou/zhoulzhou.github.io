@@ -19,7 +19,6 @@ categories:
 {% asset_img XXX.jpg %}
 ```
 
-
 #### 添加标题
 使用“#### 标题名”
 
