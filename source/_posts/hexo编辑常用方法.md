@@ -5,11 +5,20 @@ tags:
 categories:
 - HEXO
 ---
-#### 添加图片
+#### 添加网络图片
 
 ```
 ![avatar](https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei1.png)
 ```
+
+#### 添加本地图片
+修改_config.yml配置文件post_asset_folder项为true
+把需要显示的图片放到对应博文的文件夹下
+
+```
+{% asset_img XXX.jpg %}
+```
+
 
 #### 添加标题
 使用“#### 标题名”
