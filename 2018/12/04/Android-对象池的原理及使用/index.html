@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="对象池的使用在阅读Glide源码时，发现Glide大量使用对象池Pools来对频繁需要创建和销毁的代码进行优化。比如Glide中，每个图片请求任务，都需要用到 EngineJob 、DecodeJob类。若每次都需要重新new这些类，并不是很合适。而且在大量图片请求时，频繁创建和销毁这些类，可能会导致内存抖动，影响性能。Glide使用对象池的机制，对这种频繁需要创建和销毁的对象保存在一个对象池中。">
+<meta name="keywords" content="对象池">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 对象池的原理及使用">
+<meta property="og:url" content="http://yoursite.com/2018/12/04/Android-对象池的原理及使用/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="对象池的使用在阅读Glide源码时，发现Glide大量使用对象池Pools来对频繁需要创建和销毁的代码进行优化。比如Glide中，每个图片请求任务，都需要用到 EngineJob 、DecodeJob类。若每次都需要重新new这些类，并不是很合适。而且在大量图片请求时，频繁创建和销毁这些类，可能会导致内存抖动，影响性能。Glide使用对象池的机制，对这种频繁需要创建和销毁的对象保存在一个对象池中。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2018/12/04/Android-对象池的原理及使用/dui.jpg">
+<meta property="og:updated_time" content="2018-12-04T12:41:51.454Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 对象池的原理及使用">
+<meta name="twitter:description" content="对象池的使用在阅读Glide源码时，发现Glide大量使用对象池Pools来对频繁需要创建和销毁的代码进行优化。比如Glide中，每个图片请求任务，都需要用到 EngineJob 、DecodeJob类。若每次都需要重新new这些类，并不是很合适。而且在大量图片请求时，频繁创建和销毁这些类，可能会导致内存抖动，影响性能。Glide使用对象池的机制，对这种频繁需要创建和销毁的对象保存在一个对象池中。">
+<meta name="twitter:image" content="http://yoursite.com/2018/12/04/Android-对象池的原理及使用/dui.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/12/04/Android-对象池的原理及使用/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Android 对象池的原理及使用 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/04/Android-对象池的原理及使用/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android 对象池的原理及使用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-04 16:05:32 / 修改时间：20:41:51" itemprop="dateCreated datePublished" datetime="2018-12-04T16:05:32+08:00">2018-12-04</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/性能优化/" itemprop="url" rel="index"><span itemprop="name">性能优化</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="对象池的使用"><a href="#对象池的使用" class="headerlink" title="对象池的使用"></a>对象池的使用</h4><p>在阅读Glide源码时，发现Glide大量使用对象池Pools来对频繁需要创建和销毁的代码进行优化。<br>比如Glide中，每个图片请求任务，都需要用到 EngineJob 、DecodeJob类。若每次都需要重新new这些类，并不是很合适。而且在大量图片请求时，频繁创建和销毁这些类，可能会导致内存抖动，影响性能。<br>Glide使用对象池的机制，对这种频繁需要创建和销毁的对象保存在一个对象池中。每次用到该对象时，就取对象池空闲的对象，并对它进行初始化操作，从而提高框架的性能。</p>
+<h4 id="了解Android-垃圾回收"><a href="#了解Android-垃圾回收" class="headerlink" title="了解Android 垃圾回收"></a>了解Android 垃圾回收</h4><p>Android里面是一个三级Generation的内存模型，最近分配的对象会存放在Young Generation区域，当这个对象在这个区域停留的时间达到一定程度，它会被移动到Old Generation，最后到Permanent Generation区域。每一个级别的内存区域都有固定的大小，此后不断有新的对象被分配到此区域，当这些对象总的大小快达到这一级别内存区域的阀值时，会触发GC的操作，以便腾出空间来存放其他新的对象。每次GC发生的时候，所有的线程都是暂停状态的。GC所占用的时间和它是哪一个Generation也有关系，Young Generation的每次GC操作时间是最短的，Old Generation其次，Permanent Generation最长。</p>
+<h4 id="导致GC频繁执行有两个原因"><a href="#导致GC频繁执行有两个原因" class="headerlink" title="导致GC频繁执行有两个原因"></a>导致GC频繁执行有两个原因</h4><p>Memory Churn内存抖动，内存抖动是因为大量的对象被创建又在短时间内马上被释放。<br>瞬间产生大量的对象会严重占用Young Generation的内存区域，当达到阀值，剩余空间不够的时候，也会触发GC。即使每次分配的对象占用了很少的内存，但是他们叠加在一起会增加Heap的压力，从而触发更多其他类型的GC。这个操作有可能会影响到帧率，并使得用户感知到性能问题。</p>
+<h4 id="如何解决"><a href="#如何解决" class="headerlink" title="如何解决"></a>如何解决</h4><p>如果我们发现了大量对象的创建该如何处理呢？<br>可以优化就优化，比如在onDraw中初始化了一些对象，我们可以考虑是否可以将这些对象初始化到外部（比如构造方法），而不要在视图绘制需要反复调用的方法中去new<br>不能优化的采用对象池解决，如果我们这些对象的初始化不可避免，那么我们要考虑对象的复用，采用对象池来解决</p>
+<h4 id="对象池"><a href="#对象池" class="headerlink" title="对象池"></a>对象池</h4><img src="/2018/12/04/Android-对象池的原理及使用/dui.jpg">
+<p>我们在Android开发中其实可能已经使用过，只是我们没用关注而已。比如在handler发送消息时，Message的初始化经常会用Message.obtain()来实例化Message对象；在View自定义中用到手势速度控制的VelocityTracker。根据源码虽然两者对实现方式不同（Message使用链表、VelocityTracker使用数组），但是原理是一样的。即：</p>
+<blockquote>
+<p>初始化一个固定大小池子，我们每次创建对象时候先去池子中找有没有，<br>如果有直接取出，没有new出来使用后还到池子里。这样便可达到对象复用的目的</p>
+</blockquote>
+<h4 id="使用对象池的代价以及注意事项"><a href="#使用对象池的代价以及注意事项" class="headerlink" title="使用对象池的代价以及注意事项"></a>使用对象池的代价以及注意事项</h4><p><strong>当然使用对象池也是要有一定代价的：</strong></p>
+<blockquote>
+<p>1、开发者保存到对象池的对象一定要足够”重”,如果随便保存一个简单类型的到对象池,可能访问对象池需要消耗的内存比节省下来的还要多,得不偿失.<br>2、短时间内生成了大量的对象占满了池子，那么后续的对象是不能复用的<br>3、对象池是静态的，如果池子被占满，当我们离开该页面这些对象可能不再需要，那么池子不释放其中的无用对象还是要占用一定的内存空间</p>
+</blockquote>
+<h4 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h4><p><strong>使用时候申请(obtain)和释放(recycle)成对出现，使用一个对象后一定要释放还给池子 </strong><br>池子的大小要根据实际情况合理指定。池子太大上面提到的不释放而占用的内存会很大，池子太小对象过多而且因为操作耗而不能立即释放还给池子时候，池子满了，后续对象还是不能复用。所以，根据项目实际场景制定合理的大小是很必要的 </p>
+<h4 id="代码介绍"><a href="#代码介绍" class="headerlink" title="代码介绍"></a>代码介绍</h4><p><strong>Pool接口类 </strong><br>acquire(): 从对象池请求对象的函数:<br>release(): 释放对象回对象池的函数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public static interface Pool&lt;T&gt; &#123;</span><br><span class="line"></span><br><span class="line">    public T acquire();</span><br><span class="line">    </span><br><span class="line">    public boolean release(T instance);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>Android官方对象池的简单实现：SimplePool，也是用得最多的实现</strong><br>原理：使用了“懒加载”的思想。当SimplePool初始化时，不会生成N个T类型的对象存放在对象池中。而是当每次外部调用release()时，才把释放的T类型对象存放在对象池中。要先放入，才能取出来。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">public static class SimplePool&lt;T&gt; implements Pool&lt;T&gt; &#123;</span><br><span class="line">    private final Object[] mPool;</span><br><span class="line">    private int mPoolSize;</span><br><span class="line">    </span><br><span class="line">    public SimplePool(int maxPoolSize) &#123;</span><br><span class="line">        if (maxPoolSize &lt;= 0) &#123;</span><br><span class="line">            throw new IllegalArgumentException(&quot;The max pool size must be &gt; 0&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        mPool = new Object[maxPoolSize];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">    public T acquire() &#123;</span><br><span class="line">        if (mPoolSize &gt; 0) &#123;</span><br><span class="line">            final int lastPooledIndex = mPoolSize - 1;</span><br><span class="line">            T instance = (T) mPool[lastPooledIndex];</span><br><span class="line">            mPool[lastPooledIndex] = null;</span><br><span class="line">            mPoolSize--;</span><br><span class="line">            return instance;</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean release(T instance) &#123;</span><br><span class="line">        if (isInPool(instance)) &#123;</span><br><span class="line">            throw new IllegalStateException(&quot;Already in the pool!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        if (mPoolSize &lt; mPool.length) &#123;</span><br><span class="line">            mPool[mPoolSize] = instance;</span><br><span class="line">            mPoolSize++;</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private boolean isInPool(T instance) &#123;</span><br><span class="line">        for (int i = 0; i &lt; mPoolSize; i++) &#123;</span><br><span class="line">            if (mPool[i] == instance) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>SynchronizedPool</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * Synchronized) pool of objects.</span><br><span class="line">     *</span><br><span class="line">     * @param &lt;T&gt; The pooled type.</span><br><span class="line">     */</span><br><span class="line">    public static class SynchronizedPool&lt;T&gt; extends SimplePool&lt;T&gt; &#123;</span><br><span class="line">        private final Object mLock = new Object();</span><br><span class="line"></span><br><span class="line">        /**</span><br><span class="line">         * Creates a new instance.</span><br><span class="line">         *</span><br><span class="line">         * @param maxPoolSize The max pool size.</span><br><span class="line">         *</span><br><span class="line">         * @throws IllegalArgumentException If the max pool size is less than zero.</span><br><span class="line">         */</span><br><span class="line">        public SynchronizedPool(int maxPoolSize) &#123;</span><br><span class="line">            super(maxPoolSize);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public T acquire() &#123;</span><br><span class="line">            synchronized (mLock) &#123;</span><br><span class="line">                return super.acquire();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean release(T element) &#123;</span><br><span class="line">            synchronized (mLock) &#123;</span><br><span class="line">                return super.release(element);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="实例对SynchronizedPool的简单封装1"><a href="#实例对SynchronizedPool的简单封装1" class="headerlink" title="实例对SynchronizedPool的简单封装1"></a>实例对SynchronizedPool的简单封装1</h4><p>由于对象池设计是要先放入，才能取出来。所以当没有放入对象时，调用acquire()，返回都是null，所以可以对 对象池进行以下封装，方便其使用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class MyPooledClass &#123;</span><br><span class="line">  private static final SynchronizedPool&lt;ObjectClass&gt; sPool =</span><br><span class="line">          new SynchronizedPool&lt;ObjectClass&gt;(10);</span><br><span class="line"></span><br><span class="line">  public static ObjectClass obtain() &#123;</span><br><span class="line">      ObjectClass instance = sPool.acquire();</span><br><span class="line">      return (instance != null) ? instance : new ObjectClass();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public void recycle() &#123;</span><br><span class="line">      sPool.release(this);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="实例对SynchronizedPool的简单封装2"><a href="#实例对SynchronizedPool的简单封装2" class="headerlink" title="实例对SynchronizedPool的简单封装2"></a>实例对SynchronizedPool的简单封装2</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public class User &#123;</span><br><span class="line"> </span><br><span class="line">    public String id;</span><br><span class="line"> </span><br><span class="line">      public String name;</span><br><span class="line"> </span><br><span class="line">      private static final SynchronizedPool&lt;User&gt; sPool = new SynchronizedPool&lt;User&gt;(</span><br><span class="line">          10);</span><br><span class="line"> </span><br><span class="line">      public static User obtain() &#123;</span><br><span class="line">      User instance = sPool.acquire();</span><br><span class="line">      return (instance != null) ? instance : new User();</span><br><span class="line">      &#125;</span><br><span class="line"> </span><br><span class="line">      public void recycle() &#123;</span><br><span class="line">          sPool.release(this);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/对象池/" rel="tag"># 对象池</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/03/电量消耗优化/" rel="next" title="电量消耗优化">
+                <i class="fa fa-chevron-left"></i> 电量消耗优化
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/04/理解Android-java垃圾回收机制/" rel="prev" title="理解Android java垃圾回收机制">
+                理解Android java垃圾回收机制 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">38</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">9</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#对象池的使用"><span class="nav-number">1.</span> <span class="nav-text">对象池的使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#了解Android-垃圾回收"><span class="nav-number">2.</span> <span class="nav-text">了解Android 垃圾回收</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#导致GC频繁执行有两个原因"><span class="nav-number">3.</span> <span class="nav-text">导致GC频繁执行有两个原因</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何解决"><span class="nav-number">4.</span> <span class="nav-text">如何解决</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#对象池"><span class="nav-number">5.</span> <span class="nav-text">对象池</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用对象池的代价以及注意事项"><span class="nav-number">6.</span> <span class="nav-text">使用对象池的代价以及注意事项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#注意事项"><span class="nav-number">7.</span> <span class="nav-text">注意事项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码介绍"><span class="nav-number">8.</span> <span class="nav-text">代码介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实例对SynchronizedPool的简单封装1"><span class="nav-number">9.</span> <span class="nav-text">实例对SynchronizedPool的简单封装1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实例对SynchronizedPool的简单封装2"><span class="nav-number">10.</span> <span class="nav-text">实例对SynchronizedPool的简单封装2</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
