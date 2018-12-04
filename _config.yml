@@ -80,6 +80,6 @@ theme: next
 deploy:
   type: git
   repo: 
-    github: https://github.com/zhoulzhou/zhoulzhou.github.io.git
+    #github: https://github.com/zhoulzhou/zhoulzhou.github.io.git
     coding: https://git.dev.tencent.com/keem/keem.git
   branch: master
