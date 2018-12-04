@@ -2,6 +2,8 @@
 title: Hexo文章编辑常用格式
 date: 2018-12-02 15:19:31
 tags:
+- hexo
+- 编辑
 categories:
 - HEXO
 ---
