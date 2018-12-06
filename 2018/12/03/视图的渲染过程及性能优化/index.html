@@ -111,39 +111,39 @@
   <meta name="description" content="Render Performance大多数用户感知到的卡顿等性能问题的最主要根源都是因为渲染性能。从设计师的角度，他们希望App能够有更多的动画，图片等时尚元素来实现流畅的用户体验。但是Android系统很有可能无法及时完成那些复杂的界面渲染操作。Android系统每隔16ms发出VSYNC信号，触发对UI进行渲染，如果每次渲染都成功，这样就能够达到流畅的画面所需要的60fps，为了能够实现60f">
 <meta property="og:type" content="article">
 <meta property="og:title" content="视图的渲染过程及性能优化">
-<meta property="og:url" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/index.html">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/index.html">
 <meta property="og:site_name" content="KEEM--BLOG">
 <meta property="og:description" content="Render Performance大多数用户感知到的卡顿等性能问题的最主要根源都是因为渲染性能。从设计师的角度，他们希望App能够有更多的动画，图片等时尚元素来实现流畅的用户体验。但是Android系统很有可能无法及时完成那些复杂的界面渲染操作。Android系统每隔16ms发出VSYNC信号，触发对UI进行渲染，如果每次渲染都成功，这样就能够达到流畅的画面所需要的60fps，为了能够实现60f">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi1.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi2.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi3.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi4.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi5.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi6.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi7.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi8.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi9.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi10.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi11.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi12.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi13.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi14.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi15.png">
-<meta property="og:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi16.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi1.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi2.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi3.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi4.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi5.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi6.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi7.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi8.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi9.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi10.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi11.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi12.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi13.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi14.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi15.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi16.png">
 <meta property="og:updated_time" content="2018-12-05T12:21:17.126Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="视图的渲染过程及性能优化">
 <meta name="twitter:description" content="Render Performance大多数用户感知到的卡顿等性能问题的最主要根源都是因为渲染性能。从设计师的角度，他们希望App能够有更多的动画，图片等时尚元素来实现流畅的用户体验。但是Android系统很有可能无法及时完成那些复杂的界面渲染操作。Android系统每隔16ms发出VSYNC信号，触发对UI进行渲染，如果每次渲染都成功，这样就能够达到流畅的画面所需要的60fps，为了能够实现60f">
-<meta name="twitter:image" content="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/shi.png">
+<meta name="twitter:image" content="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/shi.png">
 
 
 
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/">
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/">
 
 
 
@@ -369,7 +369,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/03/视图的渲染过程及性能优化/">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/03/视图的渲染过程及性能优化/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Keem Wang">
