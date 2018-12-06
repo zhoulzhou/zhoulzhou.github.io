@@ -4,7 +4,7 @@ date: 2018-12-05 14:55:25
 tags:
 - HandlerThread
 categories:
-- ANDROID
+- 多线程
 ---
 #### HandlerThread是啥
 通俗的来说就是一个子线程具有了 looper和handler这样的机制 ，当这个子线程创建了handler的时候，别的线程可以通过handler来发送信息，并且可以在这个handler里面执行耗时的操作。
