@@ -13,7 +13,7 @@ timezone:
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://yoursite.com
+url: https://weiteluwei.com/
 root: /
 permalink: :year/:month/:day/:title/
 permalink_defaults:
@@ -83,3 +83,9 @@ deploy:
     #github: https://github.com/zhoulzhou/zhoulzhou.github.io.git
     coding: https://git.dev.tencent.com/keem/keem.git
   branch: master
+
+# 自动生成sitemap
+sitemap:
+  path: sitemap.xml
+baidusitemap:
+  path: baidusitemap.xml
