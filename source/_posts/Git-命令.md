@@ -6,6 +6,18 @@ tags:
 categories:
 - 开发工具
 ---
+1.查看最新的commit
+git show
+2.查看指定commit hashID的所有修改：
+git show commitId
+3.查看某次commit中具体某个文件的修改：
+git show commitId fileName
+
+#### git checkout	
+文件层面	舍弃工作目录中的更改
+git checkout -- filename
+git checkout .  舍弃当前目录中的所有的更改
+
 #### 提交代码：
 >git stash//保存修改
 >git pull --rebase origin branch
