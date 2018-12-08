@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="概述Android Build 系统是用来编译 Android 系统、Android SDK 以及相关文档的一套框架。在Android系统中，Android 的源码中包含了许许多多的模块。 不同产商的不同设备对于 Android 系统的定制都是不一样的。如何将这些模块统一管理起来，如何能够在不同的操作系统上进行编译，如何在编译时能够支持面向不同的硬件设备，不同的编译类型，且还要提供面向各个产商的定">
+<meta name="keywords" content="build,编译">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解Android build系统">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="概述Android Build 系统是用来编译 Android 系统、Android SDK 以及相关文档的一套框架。在Android系统中，Android 的源码中包含了许许多多的模块。 不同产商的不同设备对于 Android 系统的定制都是不一样的。如何将这些模块统一管理起来，如何能够在不同的操作系统上进行编译，如何在编译时能够支持面向不同的硬件设备，不同的编译类型，且还要提供面向各个产商的定">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/build.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/build1.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/build3.png">
+<meta property="og:image" content="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/build4.png">
+<meta property="og:updated_time" content="2018-12-08T14:46:54.900Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入理解Android build系统">
+<meta name="twitter:description" content="概述Android Build 系统是用来编译 Android 系统、Android SDK 以及相关文档的一套框架。在Android系统中，Android 的源码中包含了许许多多的模块。 不同产商的不同设备对于 Android 系统的定制都是不一样的。如何将这些模块统一管理起来，如何能够在不同的操作系统上进行编译，如何在编译时能够支持面向不同的硬件设备，不同的编译类型，且还要提供面向各个产商的定">
+<meta name="twitter:image" content="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/build.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>深入理解Android build系统 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/08/深入理解Android-build系统/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入理解Android build系统
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-08 10:07:49 / 修改时间：22:46:54" itemprop="dateCreated datePublished" datetime="2018-12-08T10:07:49+08:00">2018-12-08</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h4><p>Android Build 系统是用来编译 Android 系统、Android SDK 以及相关文档的一套框架。在Android系统中，Android 的源码中包含了许许多多的模块。 不同产商的不同设备对于 Android 系统的定制都是不一样的。如何将这些模块统一管理起来，如何能够在不同的操作系统上进行编译，如何在编译时能够支持面向不同的硬件设备，不同的编译类型，且还要提供面向各个产商的定制扩展，Android系统如何解决这些问题呢？这就是我们不得不谈的Android Build 系统。</p>
+<p>Android源码目录结构： </p>
+<img src="/2018/12/08/深入理解Android-build系统/build.png">
+<h4 id="Linux系统的make命令"><a href="#Linux系统的make命令" class="headerlink" title="Linux系统的make命令"></a>Linux系统的make命令</h4><p>在讲解Android编译系统之前，我们首先需要了解Linux系统的make命令。在Linux系统中，我们可以通过make命令来编译代码。Make命令在执行的时候，默认会在当前目录找到一个Makefile文件，然后根据Makefile文件中的指令来对代码进行编译。如gcc，Linux系统中的shell命令cp、rm等等。</p>
+<p>看到这里，有的小伙伴可能会说，在Linux系统中，shell和make命令有什么区别呢？<br>make命令事实也是通过shell命令来完成任务的，但是它的神奇之处是可以帮我们处理好文件之间的依赖关系。例如有一个文件T，它依赖于另外一个文件D，要求只有当文件D的内容发生变化，才重新生成文件T。</p>
+<p>Make命令是怎么知道两个文件之间存在依赖关系，以及当被依赖文件发生变化时如何处理目标文件的呢？答案就在前面提到的Makefile文件。Makefile文件实际上是一个脚本文件，就像普通的shell脚本文件一样，只不过它遵循的是Makefile语法。Makefile文件最基础的功能就是描述文件之间的依赖关系，以及怎么处理这些依赖关系。</p>
+<h4 id="Android-Build简介"><a href="#Android-Build简介" class="headerlink" title="Android Build简介"></a>Android Build简介</h4><p>Android Build 系统是 Android 系统的一部分，主要用来编译 Android 系统，Android SDK 以及相关文档。该系统主要由 Make 文件，Shell 脚本以及 Python 脚本组成。<br>Android build分类：</p>
+<blockquote>
+<p>build/core 目录下的文件，这是Android Build的系统框架核心；<br>device目录下的文件，存放的是具体的产品配置文件；<br>各个模块的编译文件：Android.mk，位于模块的原文件目录下。</p>
+</blockquote>
+<h4 id="Android-Build系统核心"><a href="#Android-Build系统核心" class="headerlink" title="Android Build系统核心"></a>Android Build系统核心</h4><p>Android Build系统核心在目录build/core，这个目录中有mk文件、shell脚本和per脚本，他们构成Android Build系统的基础和架构。</p>
+<p>在核心的buil/core里，系统主要干了三件事情： </p>
+<img src="/2018/12/08/深入理解Android-build系统/build1.png">
+<p><strong>常用命令：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh</span><br><span class="line">lunch</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
+<p><strong>envsetup.sh</strong><br>而在build/envsetup.sh中主要完成了三件事： </p>
+<img src="/2018/12/08/深入理解Android-build系统/build3.png">
+<p>执行Android系统的编译，必须先执行envsetup.sh脚本，这个脚本会建立Android的编译环境。其具体执行的是建立shell命令以及调用add_lunch_combo命令，这个命令的将调用该命令的所传递的参数存放到一个全局的数组变量LUNCH_MENU_CHOICES中。</p>
+<p>envsetup.sh脚本中定义的常用shell命令：<br>命令    说明<br>contact-button    指定当前编译的产品<br>croot   快速切换到源码的根目录，方便开始编译<br>m    编译整个源码，但不用将当前的目录切换到源码的根目录<br>mm    编译当前目录下的所有模块，但是不编译他们的依赖项<br>mm    编译当前目录下的所有模块，但是不编译他们的依赖项<br>cgrep    对系统中所有的C/C++文件执行grep命令<br>sgrep    对系统中所有的源文件执行grep命令</p>
+<h4 id="编译-Android-系统"><a href="#编译-Android-系统" class="headerlink" title="编译 Android 系统"></a>编译 Android 系统</h4><p>Android 系统的编译环境目前只支持 Ubuntu 以及 Mac OS 两种操作系统。在编译Android系统之前我们需要先获取完整的 Android 源码。打开控制台之后转到 Android 源码的根目录，然后执行如下命名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh </span><br><span class="line">lunch full-eng </span><br><span class="line">make -j8</span><br></pre></td></tr></table></figure>
+<p>关于这几条命令的意思，我们上面提过。<br>第一步命令“source build/envsetup.sh”引入了 build/envsetup.sh脚本，该脚本的作用是初始化编译环境，并引入一些辅助的 Shell 函数；</p>
+<p>第二步命令“lunch full-eng”是调用 lunch 函数，并指定参数为“full-eng”。lunch 函数的参数用来指定此次编译的目标设备以及编译类型。</p>
+<p>第三部命令“make -j8”才真正开始执行编译。make 的参数“-j”指定了同时编译的 Job 数量，这是个整数，该值通常是编译主机 CPU 支持的并发线程总数的 1 倍或 2 倍（例如：在一个 4 核，每个核支持两个线程的 CPU 上，可以使用 make -j8 或 make -j16）。<br>完整的编译时间依赖于编译主机的配置。</p>
+<h4 id="Build-结果"><a href="#Build-结果" class="headerlink" title="Build 结果"></a>Build 结果</h4><p>所有的编译产物都将位于 /out 目录下，该目录下主要包含：</p>
+<blockquote>
+<p>/out/host/：该目录下包含了针对主机的 Android 开发工具的产物。即 SDK 中的各种工具，例如：emulator，adb，aapt 等。<br>/out/target/common/：该目录下包含了针对设备的共通的编译产物，主要是 Java 应用代码和 Java 库。<br>/out/target/product//：包含了针对特定设备的编译结果以及平台相关的 C/C++ 库和二进制文件。其中，是具体目标设备的名称。<br>/out/dist/：包含了为多种分发而准备的包，通过“make disttarget”将文件拷贝到该目录，默认的编译目标不会产生该目录。</p>
+</blockquote>
+<h4 id="Build-生成的镜像文件"><a href="#Build-生成的镜像文件" class="headerlink" title="Build 生成的镜像文件"></a>Build 生成的镜像文件</h4><p>Build 的产物中最重要的是三个镜像文件，它们都位于 /out/target/product// 目录下:</p>
+<blockquote>
+<p>system.img：包含了 Android OS 的系统文件，库，可执行文件以及预置的应用程序，将被挂载为根分区。<br>ramdisk.img：在启动时将被 Linux 内核挂载为只读分区，它包含了 /init文件和一些配置文件。它用来挂载其他系统镜像并启动 init 进程。<br>userdata.img：将被挂载为 /data，包含了应用程序相关的数据以及和用户相关的数据。</p>
+</blockquote>
+<h4 id="Make-文件"><a href="#Make-文件" class="headerlink" title="Make 文件"></a>Make 文件</h4><p>整个 Build 系统的入口文件是源码树根目录下名称为“Makefile”的文件，当在源代码根目录上调用 make 命令时，make 命令首先将读取该文件。<br>Makefile 文件的内容只有一行：“include build/core/main.mk”。该行代码的作用很明显：包含 build/core/main.mk 文件。在 main.mk 文件中又会包含其他的文件，其他文件中又会包含更多的文件，这样就引入了整个 Build 系统。</p>
+<p>在整个Build系统中，Make 文件间的关系是相当复杂的。看一张make文件主要的关系图： </p>
+<img src="/2018/12/08/深入理解Android-build系统/build4.png">
+<p>Make 常用文件：<br>文件名    说明<br>main.mk    主要的 Make 文件，该文件中首先将对编译环境进行检查，同时引入其他的 Make 文件。另外，该文件中还定义了几个最主要的 Make 目标，例如 droid，sdk，等（参见后文“Make 目标说明”）。<br>help.mk    含了名称为 help 的 Make 目标的定义，该目标将列出主要的 Make 目标及其说明。<br>envsetup.mk    配置 Build 系统需要的环境变量，例如：TARGET_PRODUCT，TARGET_BUILD_VARIANT，HOST_OS，HOST_ARCH 等。 当前编译的主机平台信息（例如操作系统，CPU 类型等信息）就是在这个文件中确定的。 另外，该文件中还指定了各种编译结果的输出路径。<br>pathmap.mk    将许多头文件的路径通过名值对的方式定义为映射表，并提供 include-path-for 函数来获取。例如，通过 $(call include-path-for, frameworks-native)便可以获取到 framework 本地代码需要的头文件路径。<br>combo/select.mk    根据当前编译器的平台选择平台相关的 Make 文件。<br>dumpvar.mk    在 Build 开始之前，显示此次 Build 的配置信息。<br>config.mk    整个 Build 系统的配置文件，最重要的 Make 文件之一。该文件中主要包含以下内容： 定义了许多的常量来负责不同类型模块的编译。 定义编译器参数以及常见文件后缀，例如 .zip,.jar.apk。 根据 BoardConfig.mk 文件，配置产品相关的参数。 设置一些常用工具的路径，例如 flex，e2fsck，dx。<br>definitions.mk    最重要的 Make 文件之一，在其中定义了大量的函数。这些函数都是 Build 系统的其他文件将用到的。例如：my-dir，all-subdir-makefiles，find-subdir-files，sign-package 等，关于这些函数的说明请参见每个函数的代码注释。<br>distdir.mk    针对 dist 目标的定义。dist 目标用来拷贝文件到指定路径<br>dex_preopt.mk    针对启动 jar 包的预先优化。<br>pdk_config.mk    顾名思义，针对 pdk（Platform Developement Kit）的配置文件。<br>post_clean.mk    在前一次 Build 的基础上检查当前 Build 的配置，并执行必要清理工作。<br>legacy_prebuilts.mk    该文件中只定义了 GRANDFATHERED_ALL_PREBUILT 变量。<br>Makefile    被 main.mk 包含，该文件中的内容是辅助 main.mk 的一些额外内容。</p>
+<p>Android 源码中包含了许多的模块，模块的类型有很多种，例如：Java 库，C/C++ 库，APK 应用，以及可执行文件等 。并且，Java 或者 C/C++ 库还可以分为静态的或者动态的，库或可执行文件既可能是针对设备（本文的“设备”指的是 Android 系统将被安装的设备，例如某个型号的手机或平板）的也可能是针对主机（本文的“主机”指的是开发 Android 系统的机器，例如装有 Ubuntu 操作系统的 PC 机或装有 MacOS 的 iMac 或 Macbook）的。不同类型的模块的编译步骤和方法是不一样，为了能够一致且方便的执行各种类型模块的编译，在 config.mk 中定义了许多的常量，这其中的每个常量描述了一种类型模块的编译方式。常见的有： BUILD_HOST_STATIC_LIBRARY BUILD_HOST_SHARED_LIBRARY BUILD_STATIC_LIBRARY BUILD_SHARED_LIBRARY BUILD_EXECUTABLE BUILD_HOST_EXECUTABLE BUILD_PACKAGE BUILD_PREBUILT BUILD_MULTI_PREBUILT BUILD_HOST_PREBUILT BUILD_JAVA_LIBRARY BUILD_STATIC_JAVA_LIBRARY BUILD_HOST_JAVA_LIBRARY 不同类型的模块的编译过程会有一些相同的步骤，例如：编译一个 Java 库和编译一个 APK 文件都需要定义如何编译 Java 文件。为了减少代码冗余，需要将共同的代码复用起来，复用的方式是将共同代码放到专门的文件中，然后在其他文件中包含这些文件的方式来实现的。 模块的编译方式定义文件的包含关系：</p>
+<p> Make 编译镜像 make /make droid 如果在源码树的根目录直接调用“make”命令而不指定任何目标，则会选择默认目标：“droid”（在 main.mk 中定义）。因此，这和执行“make droid”效果是一样的。 droid 目标将编译出整个系统的镜像。从源代码到编译出系统镜像，整个编译过程非常复杂。这个过程并不是在 droid 一个目标中定义的，而是 droid 目标会依赖许多其他的目标，这些目标的互相配合导致了整个系统的编译。 那么需要编译出系统镜像，需要哪些依赖呢？<br> android 所依赖的其他 Make目标说明：</p>
+<p> 称    说明<br>apps_only    该目标将编译出当前配置下不包含 user，userdebug，eng 标签（关于标签，请参见后文“添加新的模块”）的应用程序。<br>droidcore    该目标仅仅是所依赖的几个目标的组合，其本身不做更多的处理。<br>dist_files    该目标用来拷贝文件到 /out/dist 目录。<br>files    该目标仅仅是所依赖的几个目标的组合，其本身不做更多的处理<br>prebuilt    该目标依赖于 (ALLPREBUILT)，(ALLPREBUILT)，(ALL_PREBUILT)的作用就是处理所有已编译好的文件。<br>$(modules_to_install)    modules_to_install 变量包含了当前配置下所有会被安装的模块（一个模块是否会被安装依赖于该产品的配置文件，模块的标签等信息），因此该目标将导致所有会被安装的模块的编译。<br>$(modules_to_check)    该目标用来确保我们定义的构建模块是没有冗余的。<br>$(INSTALLED_ANDROID_INFO_TXT_TARGET)    该目标会生成一个关于当前 Build 配置的设备信息的文件，该文件的生成路径是：out/target/product//android-info.txt<br>systemimage    生成 system.img。</p>
+<p><strong>Build 系统中包含的其他一些 Make 目标：</strong><br>Make目标说明    说明<br>make clean    执行清理，等同于：rm -rf out/<br>make sdk    编译出 Android 的 SDK<br>Make目标说明    说明<br>make clean-sdk    清理 SDK 的编译产物<br>make update-api    更新 API。在 framework API 改动之后，需要首先执行该命令来更新 API，公开的 API 记录在 frameworks/base/api 目录下。<br>make dist    执行 Build，并将 MAKECMDGOALS 变量定义的输出文件拷贝到 /out/dist 目录<br>make all    编译所有内容，不管当前产品的定义中是否会包含<br>make help    帮助信息<br>make snod    从已经编译出的包快速重建系统镜像<br>make libandroid_runtime    编译所有 JNI framework 内容<br>makeframework    编译所有 Java framework 内容<br>makeservices    编译系统服务和相关内容<br>make    编译一个指定的模块，local_target 为模块的名称<br>make clean-    清理一个指定模块的编译结果<br>makedump-products    显示所有产品的编译配置信息，例如：产品名，产品支持的地区语言，产品中会包含的模块等信息<br>makePRODUCT-xxx-yyy    编译某个指定的产品<br>makebootimage    生成 boot.img</p>
+<p>定制 Build 系统中内容 当我们要开发一款新的 Android 产品的时候，我们首先就需要在 Build 系统中添加对于该产品的定义。在 Android Build 系统中对产品定义的文件通常位于 device 目录下，device 目录下可以公司名以及产品名分为二级目录，然后加入到系统中，如以前小米等基于Android深度定制的系统。 通常，对于一个产品的定义通常至少会包括四个文件：AndroidProducts.mk，产品版本定义文件，BoardConfig.mk 以及 verndorsetup.sh。 ## AndroidProducts.mk 该文件只需要定义一个变量，名称为“PRODUCT_MAKEFILES”。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">PRODUCT_MAKEFILES := \ </span><br><span class="line"> $(LOCAL_DIR)/full_stingray.mk \ </span><br><span class="line"> $(LOCAL_DIR)/stingray_emu.mk \ </span><br><span class="line"> $(LOCAL_DIR)/generic_stingray.mk</span><br></pre></td></tr></table></figure>
+<p>产品版本定义文件 该文件中包含了对于特定产品版本的定义。该文件可能不只一个，因为同一个产品可能会有多种版本。 通常情况下，我们并不需要定义所有这些变量。Build 系统的已经预先定义好了一些组合，它们都位于 /build/target/product 下，每个文件定义了一个组合，我们只要继承这些预置的定义，然后再覆盖自己想要的变量定义即可。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">继承 full_base.mk 文件中的定义</span><br><span class="line"> $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk) </span><br><span class="line"> # 覆盖其中已经定义的一些变量</span><br><span class="line"> PRODUCT_NAME := full_lt26 </span><br><span class="line"> PRODUCT_DEVICE := lt26 </span><br><span class="line"> PRODUCT_BRAND := Android </span><br><span class="line"> PRODUCT_MODEL := Full Android on LT26</span><br></pre></td></tr></table></figure>
+<p>BoardConfig.mk 该文件用来配置硬件主板，它其中定义的都是设备底层的硬件特性。例如：该设备的主板相关信息，Wifi 相关信息，还有 bootloader，内核，radioimage 等信息。 ## vendorsetup.sh 该文件中作用是通过 add_lunch_combo 函数在 lunch 函数中添加一个菜单选项。该函数的参数是产品名称加上编译类型，中间以“-”连接，例如：add_lunch_combo full_lt26-userdebug。/build/envsetup.sh 会扫描所有 device 和 vender 二 级目 录下的名称 为”vendorsetup.sh”文件，并根据其中的内容来确定 lunch 函数的 菜单选项。 在配置了以上的文件之后，便可以编译出我们新添加的设备的系统镜像了。 我们可以使用命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh</span><br></pre></td></tr></table></figure>
+<p>来查看Build 系统已经引入了刚刚添加的 vendorsetup.sh 文件。 添加新模块 在源码树中，一个模块的所有文件通常都位于同一个文件夹中。为了将当前模块添加到整个 Build 系统中，每个模块都需要一个专门的 Make 文件，该文件的名称为“Android.mk”。Build 系统会扫描名称为“Android.mk”的文件，并根据该文件中内容编译出相应的产物。 注： 在 Android Build 系统中，编译是以模块（而不是文件）作为单位的，每个模块都有一个唯一的名称，一个模块的依赖对象只能是另外一个模块，而不能是其他类型的对象。对于已经编译好的二进制库，如果要用来被当作是依赖对象，那么应当将这些已经编译好的库作为单独的模块。对于这些已经编译好的库使用 BUILD_PREBUILT 或 BUILD_MULTI_PREBUILT。例如：当编译某个 Java 库需要依赖一些 Jar 包时，并不能直接指定 Jar 包的路径作为依赖，而必须首先将这些 Jar 包定义为一个模块，然后在编译 Java 库的时候通过模块的名称来依赖这些 Jar 包。 那么怎么编写Android.mk 文件呢？ Android.mk 文件通常以以下两行代码作为开头：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LOCAL_PATH := $(call my-dir) //设置当前模块的编译路径为当前文件夹路径</span><br><span class="line"> include $(CLEAR_VARS)//清理编译环境中用到的变量</span><br></pre></td></tr></table></figure>
+<p>为了方便模块的编译，Build 系统设置了很多的编译环境变量。要编译一个模块，只要在编译之前根据需要设置这些变量然后执行编译即可。常见的如： - LOCAL_SRC_FILES：当前模块包含的所有源代码文件。 - LOCAL_MODULE：当前模块的名称，这个名称应当是唯一的，模块间的依赖关系就是通过这个名称来引用的。 - LOCAL_C_INCLUDES：C 或 C++ 语言需要的头文件的路径。 - LOCAL_STATIC_LIBRARIES：当前模块在静态链接时需要的库的名称。 - LOCAL_SHARED_LIBRARIES：当前模块在运行时依赖的动态库的名称。 - LOCAL_CFLAGS：提供给 C/C++ 编译器的额外编译参数。 - LOCAL_JAVA_LIBRARIES：当前模块依赖的 Java 共享库。 - LOCAL_STATIC_JAVA_LIBRARIES：当前模块依赖的 Java 静态库。 - LOCAL_PACKAGE_NAME：当前 APK 应用的名称。 - LOCAL_CERTIFICATE：签署当前应用的证书名称。 - LOCAL_MODULE_TAGS：当前模块所包含的标签，一个模块可以包含多个标签。标签的值可能是 debug, eng,user，development 或者 optional。其中，optional是默认标签。标签是提供给编译类型使用的，不同的编译类型会安装包含不同标签的模块。 编译类型说明:</p>
+<p>名称    说明<br>eng    默认类型，该编译类型适用于开发阶段。 当选择这种类型时，编译结果将： 安装包含 eng, debug, user，development 标签的模块 安装所有没有标签的非 APK 模块 安装所有产品定义文件中指定的 APK 模块<br>user    该编译类型适合用于最终发布阶段。 当选择这种类型时，编译结果将： 安装所有带有 user 标签的模块 安装所有没有标签的非 APK 模块 安装所有产品定义文件中指定的 APK 模块，APK 模块的标签将被忽略<br>userdebug    该编译类型适合用于 debug 阶段。 该类型和 user 一样，除了： 会安装包含 debug 标签的模块 编译出的系统具有 root 访问权限</p>
+<p>根据上表各种类型模块的编译方式，要执行编译，只需要引入表 3 中对应的 Make 文件即可。例如，要编译一个 APK 文件，只需要在 Android.mk 文件中，加入“include $(BUILD_PACKAGE)。<br>除此以外，Build 系统中还定义了一些便捷的函数以便在 Android.mk 中使用，包括：</p>
+<blockquote>
+<p>$(call my-dir)：获取当前文件夹路径。<br>$(call all-java-files-under, xx)：获取指定目录xx下的所有 Java 文件。<br>$(call all-subdir-java-files) 获取所有子目录中的 Java 文件<br>$(call all-c-files-under, xx)：获取指定目录xx下的所有 C 语言文件。<br>$(call all-Iaidl-files-under, xx) ：获取指定目录xx下的所有 AIDL 文件。<br>$(call all-makefiles-under, xx)：获取指定目录xx下的所有 Make 文件。</p>
+</blockquote>
+<p><strong>编译一个 apk：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">LOCAL_PATH := $(call my-dir) </span><br><span class="line"> include $(CLEAR_VARS) </span><br><span class="line"> # 获取指定目录src下的所有 Java 文件。</span><br><span class="line"> LOCAL_SRC_FILES := $(call all-java-files-under,src )           </span><br><span class="line"> # 当前模块依赖的静态 Java 库，如果有多个以空格分隔</span><br><span class="line"> LOCAL_STATIC_JAVA_LIBRARIES := static-library </span><br><span class="line"> # 当前模块的名称</span><br><span class="line"> LOCAL_PACKAGE_NAME := LocalPackage </span><br><span class="line"> # 编译 APK 文件</span><br><span class="line"> include $(BUILD_PACKAGE)</span><br></pre></td></tr></table></figure></p>
+<p>  <strong>编译一个 Java 的静态库：</strong></p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">LOCAL_PATH := $(call my-dir) </span><br><span class="line">include $(CLEAR_VARS) </span><br><span class="line"># 获取所有子目录中的 Java 文件</span><br><span class="line">LOCAL_SRC_FILES := $(call all-subdir-java-files) </span><br><span class="line"># 当前模块依赖的动态 Java 库名称</span><br><span class="line">LOCAL_JAVA_LIBRARIES := android.test.runner </span><br><span class="line"># 当前模块的名称</span><br><span class="line">LOCAL_MODULE := sample </span><br><span class="line"># 将当前模块编译成一个静态的 Java 库</span><br><span class="line">include $(BUILD_STATIC_JAVA_LIBRARY)</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/build/" rel="tag"># build</a>
+          
+            <a href="/tags/编译/" rel="tag"># 编译</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/06/Android-mk语法详解/" rel="next" title="Android .mk语法详解">
+                <i class="fa fa-chevron-left"></i> Android .mk语法详解
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/08/Handler机制-为何要有handler/" rel="prev" title="Handler机制-为何要有handler">
+                Handler机制-为何要有handler <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">55</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">11</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">30</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux系统的make命令"><span class="nav-number">2.</span> <span class="nav-text">Linux系统的make命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Android-Build简介"><span class="nav-number">3.</span> <span class="nav-text">Android Build简介</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Android-Build系统核心"><span class="nav-number">4.</span> <span class="nav-text">Android Build系统核心</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#编译-Android-系统"><span class="nav-number">5.</span> <span class="nav-text">编译 Android 系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Build-结果"><span class="nav-number">6.</span> <span class="nav-text">Build 结果</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Build-生成的镜像文件"><span class="nav-number">7.</span> <span class="nav-text">Build 生成的镜像文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Make-文件"><span class="nav-number">8.</span> <span class="nav-text">Make 文件</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
