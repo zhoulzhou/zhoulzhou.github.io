@@ -5,7 +5,7 @@ tags:
 - build
 - 编译
 categories:
-- ANDROID
+- Android build系统
 ---
 #### 概述
 

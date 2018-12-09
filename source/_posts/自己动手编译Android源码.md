@@ -3,7 +3,7 @@ title: 自己动手编译Android源码
 date: 2018-11-30 15:03:28
 tags:
 categories:
-- ANDROID
+- Android build系统
 ---
 本文使用最新的Ubuntu 16.04,请首先确保自己已经安装了Git.没安装的同学可以通过以下命令进行安装:
 

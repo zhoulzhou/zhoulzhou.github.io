@@ -4,7 +4,7 @@ date: 2018-12-06 16:57:38
 tags:
 - 预置apk
 categories:
-- ANDROID
+- Android build系统
 ---
 #### 一、如何将带源码的APK预置进系统？
 1)     在 packages/apps 下面以需要预置的 APK的 名字创建一个新文件夹，以预制一个名为Test的APK 为例

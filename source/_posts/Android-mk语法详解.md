@@ -4,7 +4,7 @@ date: 2018-12-06 16:58:35
 tags:
 - mk语法
 categories:
-- ANDROID
+- Android build系统
 ---
 一个Android.mk文件可以编译多个模块，每个模块属下列类型之一：
   1）APK程序
