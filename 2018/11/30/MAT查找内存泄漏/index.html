@@ -472,7 +472,7 @@
         <h4 id="获取堆转储HPROF文件"><a href="#获取堆转储HPROF文件" class="headerlink" title="获取堆转储HPROF文件"></a>获取堆转储HPROF文件</h4><p>通过点击时间线下方工具栏中的 Export heap dump as HPROF file，将堆转储导出到一个 HPROF 文件中。 在显示的对话框中，确保使用 .hprof 后缀保存文件。</p>
 <p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei5.png" alt="avatar"></p>
 <p>要使用其他 HPROF 分析器，您需要将 HPROF 文件从 Android 格式转换为 Java SE HPROF 格式。 您可以使用 android_sdk/platform-tools/ 目录中提供的 hprof-conv 工具执行此操作。 运行包括以下两个参数的 hprof-conv 命令：原始 HPROF 文件和转换后 HPROF 文件的写入位置。 例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hprof-conv heap-original.hprof heap-converted.hprof</span><br></pre></td></tr></table></figure>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">hprof-conv</span> <span class="selector-tag">heap-original</span><span class="selector-class">.hprof</span> <span class="selector-tag">heap-converted</span><span class="selector-class">.hprof</span></span><br></pre></td></tr></table></figure>
 <p>MAT查看HPROF<br>然後用MAT打开我们导出的文件，我导出了两个文件，test1.hprof和test2.hprof,其中test1.hprof是内存未泄露时的快照，test2.hprof是内存已经泄露的快照。我们用MAT的Histogram（直方图）和Dominator Tree （支配树）来分析内存情况。Histogram可以列出内存中每个对象的名字、数量以及大小。Dominator Tree会将所有内存中的对象按大小进行排序，并且我们可以分析对象之间的引用结构。 </p>
 <p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei6.png" alt="avatar"></p>
 <p>一、 Histogram（直方图）<br>可列出每一个类的实例数。支持正则表达式查找，也可以计算出该类所有对象的retained size。默认是通过class（group by class）分类展示的。 </p>
@@ -501,7 +501,7 @@
 <p>还有更强大的，通过OQL语句查询,有点像写SQL语句。</p>
 <p><img src="https://github.com/zhoulzhou/MarkDownPhotos/raw/master/android/nei11.png" alt="avatar"></p>
 <p>是不是分分钟查出MainActivity有两个对象。哈哈！<br>比如：查找size＝0并且未使用过的ArrayList</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from java.util.ArrayList where size=0 and modCount=0</span><br></pre></td></tr></table></figure>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * <span class="keyword">from</span> java.util.ArrayList where <span class="attribute">size</span>=0 <span class="keyword">and</span> <span class="attribute">modCount</span>=0</span><br></pre></td></tr></table></figure>
 <p>这个地方可以多研究研究。</p>
 
       
