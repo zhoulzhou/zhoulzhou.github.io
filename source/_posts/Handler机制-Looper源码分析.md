@@ -3,7 +3,6 @@ title: Handler机制 Looper源码分析
 date: 2018-12-10 13:40:08
 tags:
 - Looper
-- Handler
 categories:
 - Handler机制
 ---

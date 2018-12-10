@@ -2,7 +2,6 @@
 title: Handler机制 MessageQueue源码分析
 date: 2018-12-10 09:59:01
 tags:
-- Handler
 - MessageQueue
 categories:
 - Handler机制

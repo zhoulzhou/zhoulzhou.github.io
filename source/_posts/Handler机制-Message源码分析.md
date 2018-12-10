@@ -2,8 +2,7 @@
 title: Handler机制-Message源码分析
 date: 2018-12-08 15:42:08
 tags:
-- handler
-- message
+- Message
 categories:
 - Handler机制
 ---
