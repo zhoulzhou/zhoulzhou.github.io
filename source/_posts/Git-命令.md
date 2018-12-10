@@ -26,6 +26,11 @@ git checkout .  舍弃当前目录中的所有的更改
 >git commit 
 >git push origin branch
 
+#### 增补提交
+1、git commit -C HEAD --amend  (不用经过提交模块过程)
+   git commit --amend
+2、git push origin branch
+
 #### ssh-keygen
 一路默认  然后在隐藏文件夹.ssh 找到key文件
 >ssh-keygen  -t rsa -C 注释
