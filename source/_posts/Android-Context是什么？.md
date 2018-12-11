@@ -1,0 +1,614 @@
+---
+title: Android Context是什么？
+date: 2018-12-11 16:18:18
+tags:
+- Context
+categories:
+- ANDROID
+---
+#### 引言
+Context对于Android开发人员来说并不陌生，项目中我们会经常使用Context来获取APP资源，创建UI，获取系统Service服务，启动Activity，绑定Service，发送广播，获取APP信息等等。那么Context到底是什么？Context又是怎么来实现以上功能的？在什么场景下使用不同的Context？一个APP中总共有多少个Context？这篇博客将从源码角度带你分析Android Context到底是个啥。
+
+#### 1.Context是什么
+相信很多人多会问Context到底是什么？
+
+>我们可以理解为“上下文”：它贯穿整个应用；
+>也可以理解成“运行环境”：它提供了一个应用运行所需要的信息，资源，系统服务等；
+>同样可以理解成“场景”：用户操作和系统交互这一过程就是一个场景，比如Activity之间的切换，服务的启动等都少不了Context。
+然而以上这些都是我们从抽象角度去理解Context的作用，那么从Code代码来看Context到底是什么呢？Activity是一个Context，Application是一个Context，Service也是一个Context你信么？不信的话，同样还是那句话“Read the fucking source code”。
+
+```
+public abstract class Context {
+..............................
+ /** Return an AssetManager instance for your application's package. */
+    public abstract AssetManager getAssets();
+
+    /** Return a Resources instance for your application's package. */
+    public abstract Resources getResources();
+
+    /** Return PackageManager instance to find global package information. */
+    public abstract PackageManager getPackageManager();
+
+    /** Return a ContentResolver instance for your application's package. */
+    public abstract ContentResolver getContentResolver();
+
+...................
+//获取系统服务
+public abstract Object getSystemService(@ServiceName @NonNull String name);
+//发送广播
+public abstract void sendBroadcast(Intent intent);
+//启动Activity
+public abstract void startActivity(Intent intent);
+//启动服务，绑定服务
+public abstract ComponentName startService(Intent service);
+public abstract boolean bindService(Intent service, @NonNull ServiceConnection conn,
+            @BindServiceFlags int flags);
+
+................
+}
+```
+
+从源码看Context就是一个抽象类，里面定义了各种抽象方法，包括获取系统资源，获取系统服务，发送广播，启动Activity,Service等。所以从源码角度看Context就是抽象出一个App应用所有功能的集合，由于Context是一个纯的抽象类，所以它的具体的方法实现是在其之类ContextImpl中实现了，稍后分析。我们平时在MainActivity中会这么给mContext = this赋值，其言外之意就是当前Activity类就是Context，那说明Activity是Context的子类。通过Android Studio查看Context的子类图如下：
+
+{% asset_img con1.png %}
+
+有图可知，Context的子类很多，我们主要分析以上红色矩形框内的即可。接下来就分析Android系统中Context的继承关系！
+
+#### 2.Android系统中Context的继承关系
+有上一节我们知道，Activity是一个Context，Service也是一个Context等等，那么这些类跟Context具体什么关系呢？接下来有一幅图Context继承关系图来说明： 
+
+{% asset_img con3.png %}
+
+Context类是一个抽象类，具体实现在ContextImpl类中；而ContextWrapper是Context的一个包装类，其里面所有的方法实现都是调用其内部mBase变量的方法，而mBase就是ContextImpl对象，稍后分析。然而ContextWrapper还有一个ContextThemeWrapper子类，该类中扩展了主题相关的方法。有继承关系图可以看出，Application和Service是继承自ContextWrapper，而Activity是继承自ContextThemeWrapper，是不是有点奇怪？其实一点都不奇怪，Activity在启动的时候系统都会加载一个主题，也就是我们平时在AndroidManifest.xml文件里面写的android:theme=”@style/AppTheme”属性啦！然而Service和Applicaton都和UI界面并没有卵关系！因此他们继承自ContextWrapper。所以Activity，Application，Service其实都关联着一个mBase变量，而mBase变量是ContextImpl对象的赋值，也是真正实现抽象类Context的地方。虽然Activity，Application，Service都有一个共同的祖先Context，但是他们自己本身持有的Context对象是不同的，接下来我们从源码角度分析以上几个类的实现。
+
+#### 3.不同Context源码分析
+#### 3.1ContextImpl—真正实现Context功能的类
+从源码看出Context类仅仅是定义了一组抽象方法的抽象类，其内部的方法真正实现的地方都在ContextImpl类中。
+
+```
+class ContextImpl extends Context {
+    //整个App的主线程
+    final ActivityThread mMainThread;
+    //整个App的相关信息
+    final LoadedApk mPackageInfo;
+    //资源解析器
+    private final ResourcesManager mResourcesManager;
+    //App资源类
+    private final Resources mResources;
+    //外部Context的引用
+    private Context mOuterContext;
+    //默认主题
+    private int mThemeResource = 0;
+    private Resources.Theme mTheme = null;
+    //包管理器
+    private PackageManager mPackageManager;
+
+    ................................
+//以下是静态区注册系统的各种服务，多大五六十种系统服务，因此每个持有Context引用的对象都可以随时通过getSystemService方法来轻松获取系统服务。
+static {
+        registerService(ACCESSIBILITY_SERVICE, new ServiceFetcher() {
+                public Object getService(ContextImpl ctx) {
+                    return AccessibilityManager.getInstance(ctx);
+                }});
+
+        registerService(CAPTIONING_SERVICE, new ServiceFetcher() {
+                public Object getService(ContextImpl ctx) {
+                    return new CaptioningManager(ctx);
+                }});
+
+        registerService(ACCOUNT_SERVICE, new ServiceFetcher() {
+                public Object createService(ContextImpl ctx) {
+                    IBinder b = ServiceManager.getService(ACCOUNT_SERVICE);
+                    IAccountManager service = IAccountManager.Stub.asInterface(b);
+                    return new AccountManager(ctx, service);
+                }});
+        ........................
+
+       }
+
+.................
+//启动Activity的地方
+ @Override
+    public void startActivity(Intent intent, Bundle options) {
+        warnIfCallingFromSystemProcess();
+        if ((intent.getFlags()&Intent.FLAG_ACTIVITY_NEW_TASK) == 0) {
+            throw new AndroidRuntimeException(
+                    "Calling startActivity() from outside of an Activity "
+                    + " context requires the FLAG_ACTIVITY_NEW_TASK flag."
+                    + " Is this really what you want?");
+        }
+        mMainThread.getInstrumentation().execStartActivity(
+            getOuterContext(), mMainThread.getApplicationThread(), null,
+            (Activity)null, intent, -1, options);
+    }
+
+..........
+//启动服务的地方
+@Override
+    public ComponentName startService(Intent service) {
+        warnIfCallingFromSystemProcess();
+        return startServiceCommon(service, mUser);
+    }
+...............     
+}
+```
+
+分析：ContextImpl实现了抽象类Context里面的所有方法，获取资源，启动Activity，Service等。值得注意的是在ContextImpl创建的时候就会利用静态区来注册系统的各种服务，因此每个持有Context引用的类都可以通过getSystemService来轻松的获取系统服务了。比如我们平时LayoutInflater类来加载一个XML布局时时这么写的
+
+```
+LayoutInflater inflater = LayoutInflater.from(mContext);
+View layout = inflater.inflate(R.layout.activity_main,null);
+```
+
+其实源码内部是这样实现的：
+
+```
+/**
+     * Obtains the LayoutInflater from the given context.
+     */
+    public static LayoutInflater from(Context context) {
+        LayoutInflater LayoutInflater =
+                (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        if (LayoutInflater == null) {
+            throw new AssertionError("LayoutInflater not found.");
+        }
+        return LayoutInflater;
+    }
+```
+
+可以看出LayoutInflater布局加载器也是调用context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);来获取系统服务得到的。因此我们以后在代码中也可以这么来加载一个XML布局：
+
+```
+ //获取服务
+LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+View layout = inflater.inflate(R.layout.activity_main,null);
+```
+
+由于ContextImpl是抽象类Context的具体实现，而Application，Activity，Service的祖先又都是Context类，那么它们都关联着一个ContextImpl对象来真正实现Context里面所有的方法。现在来分析下不同子类创建的Context对象。
+
+#### 3.2ContextWrapper
+
+```
+public class ContextWrapper extends Context {
+    Context mBase;
+
+    public ContextWrapper(Context base) {
+        mBase = base;
+    }
+
+    /**
+     * Set the base context for this ContextWrapper.  All calls will then be
+     * delegated to the base context.  Throws
+     * IllegalStateException if a base context has already been set.
+     * 
+     * @param base The new base context for this wrapper.
+     */
+    protected void attachBaseContext(Context base) {
+        if (mBase != null) {
+            throw new IllegalStateException("Base context already set");
+        }
+        mBase = base;
+    }
+
+    /**
+     * @return the base context as set by the constructor or setBaseContext
+     */
+    public Context getBaseContext() {
+        return mBase;
+    }
+ ...................
+  @Override
+    public AssetManager getAssets() {
+        return mBase.getAssets();
+    }
+
+    @Override
+    public Resources getResources()
+    {
+        return mBase.getResources();
+    }
+
+    @Override
+    public PackageManager getPackageManager() {
+        return mBase.getPackageManager();
+    }
+...............
+}
+```
+
+分析：从ContextWrapper源码可以看到，这个类只是一个装饰类，其内部所有方法的实现都指向mBase成员变量，而然谁给mBase成员变量赋值呢？结论是Context的真正实现类ContextImpl对象，后面会分析到。该类中通过attachBaseContext方法将ContextImpl对象赋值给mBase成员变量。
+
+每一个App应用都是由ASM通过Binder机制创建一个新的进程然后调用ActivityThread类中的main方法开始的。很多人可能会感到奇怪为啥Android也是基于Java实现的，为啥没有看到main方法呢？其实整个App应用的入口在ActivityThread.main方法里面啦！关于Activity启动过程请参考大神级别人物老罗的这篇博客：Android应用程序的Activity启动过程简要介绍和学习计划。所有有关Application，Activity，Service的创建都是在ActivityThread类中，其实该类就是我们App的主线程。
+
+#### 3.3Application中的Context
+每一个应用在启动的时候都会创建一个Application对象，该对象是全局的，开发者可以实现一个子类MyApplication类来继承Application，然后实现一些全局的方法或者数据。
+
+应用入口ActivityThread#main
+
+```
+ public static void main(String[] args) {
+        ................
+        //初始化Looper
+        Looper.prepareMainLooper();
+        //创建一个APP主线程ActivityThread对象
+        ActivityThread thread = new ActivityThread();
+        //初始化App应用信息
+        thread.attach(false);
+        //获得主线程也就是UI线程的handler对象
+        if (sMainThreadHandler == null) {
+            sMainThreadHandler = thread.getHandler();
+        }
+        //此处值得注意了，在Android4.1版本之后添加了这么一个方法，目的就是为了能让AsyncTask能在子线程创建，
+        //在之前的版本是不能在子线程中创建初始化AsyncTask的。
+        //对AsyncTask感兴趣的童鞋可以参考这篇博客[ Android异步任务处理框架AsyncTask源码分析](http://blog.csdn.net/feiduclear_up/article/details/46860015)
+        AsyncTask.init();
+        //启动Looper循环，进入消息循环。
+        Looper.loop();
+    }
+```
+
+分析：main方法主要工作就是创建一个App应用的主线程ActivityThread并初始化，且构建一个消息循环机制用于处理UI交互。代码第6-8行，创建了一个应用的主线程ActivityThread并且调用attach方法来初始化。进入attach方法： 
+
+**ActivityThread#attach**
+
+```
+private void attach(boolean system) {
+    //整个应用的Application对象
+    Application mInitialApplication;
+    //整个应用的后台管家
+    Instrumentation mInstrumentation;
+        ................
+            try {
+                mInstrumentation = new Instrumentation();
+                ContextImpl context = ContextImpl.createAppContext(
+                        this, getSystemContext().mPackageInfo);
+                //利用ContextImpl创建整个应用的Application对象
+                mInitialApplication = context.mPackageInfo.makeApplication(true, null);
+                //调用Application对象的onCreate方法
+                mInitialApplication.onCreate();
+            } 
+       ................
+    }
+```
+
+代码第13行：通过调用LoadedApk#makeApplication方法创建应用程序的Application对象。 
+
+**LoadedApk#makeApplication**
+
+```
+public Application makeApplication(boolean forceDefaultAppClass,
+            Instrumentation instrumentation) {
+        //第一次进来mApplication==null条件不满足，之后创建Activity的时候条件满足直接返回当前Application对象
+        if (mApplication != null) {
+            return mApplication;
+        }
+
+        Application app = null;
+
+        try {
+
+            //为Appliaction创建ContextImpl对象
+            ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
+            //调用Instrumentation类中的newApplication方法创建Application
+            app = mActivityThread.mInstrumentation.newApplication(
+                    cl, appClass, appContext);
+            //给ContextImpl设置外部引用
+            appContext.setOuterContext(app);
+        } 
+      ....................
+        return app;
+    }
+```
+
+分析： 
+1.代码第4-6行：判断当前应用是否是第一次创建Application对象，如果不是则直接返回Application对象，否则去创建第一个Application对象。目的是确保当前应用之创建了一个全局的Application对象。 
+2.代码第13行：创建了一个ContextImpl对象，然后作为参数用于创建Application对象。 
+3.代码第15行：调用Instrumentation类中的newApplication方法来创建Application对象。 
+4.代码第18行：将创建好的Application对象赋值给ContextImpl类的mOuterContext成员变量，目的是让ContextImpl持有外部Application类的引用用于注册系统服务或者其他方法。
+
+**Instrumentation#newApplication**
+
+```
+public Application newApplication(ClassLoader cl, String className, Context context)
+            throws InstantiationException, IllegalAccessException, 
+            ClassNotFoundException {
+        return newApplication(cl.loadClass(className), context);
+    }
+
+    static public Application newApplication(Class<?> clazz, Context context)
+            throws InstantiationException, IllegalAccessException, 
+            ClassNotFoundException {
+        Application app = (Application)clazz.newInstance();
+        app.attach(context);
+        return app;
+    }
+```
+
+分析：以上代码通过类加载器来创建Application对象，并且调用app.attach（context）方法来初始化Application对象。这里的context就是上面传下来的ContextImpl对象了。进入Application源码 
+
+**Application#attach**
+
+```
+public class Application extends ContextWrapper implements ComponentCallbacks2 {
+..................
+/**
+     * @hide
+     */
+    /* package */ final void attach(Context context) {
+        attachBaseContext(context);
+        mLoadedApk = ContextImpl.getImpl(context).mPackageInfo;
+    }
+...............
+}
+```
+
+分析：Application类是继承自ContextWrapper类，在attach方法中调父类也就是ContextWrapper中的attachBaseContext方法来对ContextWrapper的成员变量mBase赋值成ContextImpl对象，具体可以参考3.2小节。因此Application通过父类ContextWrapper类的成员变量mBase指向了ContextImpl，让Application类真正实现了其祖父类Context抽象类中的所有抽象方法。
+
+#### 3.4Activity中的Context
+当Application创建完成之后，ASM会通过Binder机制通知ActivityThread去创建需要的Activity了。最后会辗转到ActivityThread类中的performLaunchActivity方法来创建Activity。
+
+**ActivityThread#performLaunchActivity**
+
+```
+private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) {
+        ........................
+
+        Activity activity = null;
+        try {
+        //通过Instrumentation类的newActivity方法来创建一个Activity对象
+            java.lang.ClassLoader cl = r.packageInfo.getClassLoader();
+            activity = mInstrumentation.newActivity(
+                    cl, component.getClassName(), r.intent);
+           ..........................
+        }
+        try {
+            //获取当前应用的Application对象，该对象的唯一作用就是作为参数传递到Activity里，
+            然后在Activity类中可以获得调用getApplication方法来获取Application对象
+            Application app = r.packageInfo.makeApplication(false, mInstrumentation);
+
+          .............................
+            if (activity != null) {
+                //为Activity创建ContextImpl对象
+                Context appContext = createBaseContextForActivity(r, activity);
+                //为Activity赋值初始化
+                 activity.attach(appContext, this, getInstrumentation(), r.token,
+                        r.ident, app, r.intent, r.activityInfo, title, r.parent,
+                        r.embeddedID, r.lastNonConfigurationInstances, config,
+                        r.voiceInteractor);
+               ...................
+                //获取当前应用的主题资源
+                int theme = r.activityInfo.getThemeResource();
+                if (theme != 0) {
+                //设置主题
+                    activity.setTheme(theme);
+                }
+
+                activity.mCalled = false;
+                if (r.isPersistable()) {
+                //辗转到Activity，调用Activity的生命周期onCreate方法
+                    mInstrumentation.callActivityOnCreate(activity, r.state, r.persistentState);
+                } else {
+                    mInstrumentation.callActivityOnCreate(activity, r.state);
+                }
+                .............
+                r.activity = activity;
+                r.stopped = true;
+                if (!r.activity.mFinished) {
+                //调用Activity的生命周期onStart方法
+                    activity.performStart();
+                    r.stopped = false;
+                }
+                ......................
+
+        return activity;
+    }
+```
+
+分析：
+
+step1 这里也是通过Instrumentation类的newActivity方法来创建一个Activity对象，跟上面创建Application对象基本类似，这里就不贴源码了。
+step2 之后在调用本地方法 createBaseContextForActivity去创建ContextImpl对象，该对象将作为参数传递到Activity#attach方法中。
+step3 调用Activity#attach方法对刚创建好的Activity进行初始化操作。后面会分析Activity#attach方法。
+step4 获取当前应用的主题资源，然后调用Activity#setTheme方法给刚创建好的Activity对象设置主题。
+setp5 一次调用Activity的生命周期方法onCreate，onStart。
+
+**step2 **
+现在来分析下ActivityThread#createBaseContextForActivity方法。
+
+**ActivityThread#createBaseContextForActivity**
+
+```
+private Context createBaseContextForActivity(ActivityClientRecord r,
+            final Activity activity) {
+        ContextImpl appContext = ContextImpl.createActivityContext(this, r.packageInfo, r.token);
+        appContext.setOuterContext(activity);
+        Context baseContext = appContext;
+   .............
+   return baseContext；
+}
+```
+
+分析：该方法里面的确创建了一个ContextImpl对象，并且返回该对象。同时也调用了ContextImpl#setOuterConexet方法让ContextImpl持有外部Activity对象的引用，目的是在ContextImpl类中注册一些服务，设置主题等都需要外部Activity对象的引用。
+
+**setp3 **
+由于Activity没有重写构造方法，因此创建出来的Activity并没有初始化。为了对Activity初始化，以上代码调用了Activity#attach方法来进行初始化操作。
+
+**Activity#attach**
+
+```
+public class Activity extends ContextThemeWrapper
+        implements LayoutInflater.Factory2,
+        Window.Callback, KeyEvent.Callback,
+        OnCreateContextMenuListener, ComponentCallbacks2,
+        Window.OnWindowDismissedCallback {
+
+............................
+
+final void attach(Context context, ActivityThread aThread,
+            Instrumentation instr, IBinder token, int ident,
+            Application application, Intent intent, ActivityInfo info,
+            CharSequence title, Activity parent, String id,
+            NonConfigurationInstances lastNonConfigurationInstances,
+            Configuration config, IVoiceInteractor voiceInteractor) {
+        //调用父类方法对mBase变量赋值
+        attachBaseContext(context);
+        //创建一个Activity的窗口
+        mWindow = PolicyManager.makeNewWindow(this);
+        //给Window窗口设置回调事件
+        mWindow.setCallback(this);
+        mWindow.setOnWindowDismissedCallback(this);
+        mWindow.getLayoutInflater().setPrivateFactory(this);
+        //设置键盘弹出状态
+        if (info.softInputMode != WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED) {
+            mWindow.setSoftInputMode(info.softInputMode);
+        }
+        if (info.uiOptions != 0) {
+            mWindow.setUiOptions(info.uiOptions);
+        }
+        mUiThread = Thread.currentThread();
+
+        mMainThread = aThread;
+        mInstrumentation = instr;
+        mToken = token;
+        mIdent = ident;
+        //此处注意，将整个应用的Application对象赋值给Activity的mApplication成员变量。
+        //目的是为了能在Activity中通过getApplication方法来直接获取Application对象
+        mApplication = application;
+       ......................
+    }
+    //在Activity中返回当前应用的Application对象
+/** Return the application that owns this activity. */
+    public final Application getApplication() {
+        return mApplication;
+    }
+```
+
+分析：attach方法一进来就调用了父类的attachBaseContext方法将ContextImpl对象注册到Activity里面去。由于Activity的父类是ContextThemeWrapper，进入该类查看attachBaseContext方法
+
+**ContextThemeWrapper#attachBaseContext**
+
+```
+public class ContextThemeWrapper extends ContextWrapper {
+   ............
+
+    @Override protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
+    }
+    ...........
+```
+
+该方法也很简单，还是调用父类的attachBaseContext方法注册ContextImpl，然而该类的父类就是ContextWrapper类。 
+
+**ContextWrapper#attachBaseContext**
+
+```
+public class ContextWrapper extends Context {
+..............
+ protected void attachBaseContext(Context base) {
+        if (mBase != null) {
+            throw new IllegalStateException("Base context already set");
+        }
+        mBase = base;
+    }
+..........
+}
+```
+
+在ContextWrapper类中调用attachBaseContext方法将ContextImpl对象（真正实现Context抽象类里面各种方法的类）赋值给mBase成员变量，而ContextWrapper只是一个装饰类，里面所有方法的实现都是调用mBase的方法。此时mBase方法被赋值成ContextImpl对象，这么一来Activity的祖父类就实现了里面的所有Context抽象方法，那么在Activity中可以调用Context里面的任何方法了。
+
+#### 3.5 Service中的Context
+同样创建Service也是有ASM通过Binder机制通知ActivityThread类去创建一个Service服务了，最后会辗转到ActivityThread#handleCreateService方法中来创建一个Service服务。
+
+**ActivityThread#handleCreateService**
+
+```
+private void handleCreateService(CreateServiceData data) {
+
+        LoadedApk packageInfo = getPackageInfoNoCheck(
+                data.info.applicationInfo, data.compatInfo);
+        Service service = null;
+        try {
+            //通过类加载器创建Service服务
+            java.lang.ClassLoader cl = packageInfo.getClassLoader();
+            service = (Service) cl.loadClass(data.info.name).newInstance();
+        } 
+    .............
+        try {
+          ............
+          //此处为Service创建一个ContextImpl对象
+            ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
+            //同样为ContextImpl类设置外部对象，目的还是让ContextImpl持有外部类的引用
+            //在ContextImpl类中的许多方法需要使用到外部Context对象引用
+            context.setOuterContext(service);
+    ................
+            //获得当前应用的Applicaton对象，该对象在整个应用中只有一份，是共享的。
+            Application app = packageInfo.makeApplication(false, mInstrumentation);
+            //将ContextImpl对象和Application对象作为attach方法参数来初始化Service
+            service.attach(context, this, data.info.name, data.token, app,
+                    ActivityManagerNative.getDefault());
+            //Service初始化完成之后系统自动调用onCreate生命周期方法
+            service.onCreate();
+     ................
+    }
+```
+
+分析： 
+跟以上Activity和Application创建类似，通过类加载器来创建Service对象。然后在创建一个ContextImpl对象，并且为ContextImpl类设置外部Service对象Context的引用，目的之在ContextImpl类中的许多方法都需要使用到外部Context引用。
+
+其次和Activity一样调用packageInfo.makeApplication方法去获得当前应用的Application对象，然后将Application对象和ContextImpl对象作为Service#attach方法去初始化Service，当Service初始化完成之后，系统调用Service的生命周期方法onCreate方法，该方法是创建Service过程中最早暴露给开发者的，所有开发者在实现自己的Service时可以重写onCreate方法来进行一些初始化工作。
+
+现在我们来分析下Service#attach方法
+
+**Service#attach**
+
+```
+public abstract class Service extends ContextWrapper implements ComponentCallbacks2 {
+    //默认构造方法调用父类构造方法并且参数为null，意味着构造方法里并没有对Service初始化
+    public Service() {
+        super(null);
+    }
+
+//在Service中返回整个应用的Application对象
+    /** Return the application that owns this service. */
+    public final Application getApplication() {
+        return mApplication;
+    }
+    ..............
+ /**
+     * @hide
+     */
+    public final void attach(
+            Context context,
+            ActivityThread thread, String className, IBinder token,
+            Application application, Object activityManager) {
+        //调用父类方法去注册ContextImpl对象
+        attachBaseContext(context);
+        mThread = thread;           // NOTE:  unused - remove?
+        mClassName = className;
+        mToken = token;
+        //将整个应用的Applicaton对象赋值给Service类的成员变量mApplication
+        mApplication = application;
+        mActivityManager = (IActivityManager)activityManager;
+
+    }
+```
+
+分析： 
+Service的父类是ContextWrapper，在attach方法中调用了父类中attachBaseContext方法去注册CotextImpl对象，这一操作和创建Application一样，具体参考前面分析。
+
+#### 3.6总结
+至此，一个Android应用可能创建Context的地方基本分析结束。所有有关创建Context对象的地方都是在ActivityThread类中，该类就是整个应用的入口，也是整个应用的主线程。每个应用首先会创建一个Application对象，且一个应用只有唯一一个Application对象，之后再根据需求创建Activity或者Service。且在创建Activity或者Service的时候都会持有一份当前应用的Application对象，通过getApplication方法即可获得。
+
+不管在创建Application，Activity还是Service的时候都会去创建一个ContextImpl对象（真正实现抽象类Context功能的类就是ContextImpl），然后将该对象注册到对应的Application，Activity，Service中，之后在Application，Activity，Service类中就可以使用Context的所有功能了。所以Application，Activity，Service的祖先都是抽象类Context，相当于Context给了他们身体，让他们有了一个躯壳有思想，但真正让他们思想得到执行的类还是ContextImpl类。因此我们可以这么来理解：抽象类Context给了Application，Activity，Service思想，而ContextImpl类给了他们去执行思想的功能。
+
+有以上分析我们知道，每创建一个Application，Activity还是Service都会创建一个ContextImpl类（真正实现Context类功能）。且一个应用只会创建一个Application对象。因此：**一个App中Context的个数=1个Application+Activity的个数+Service的个数。**
+
+#### Context总结
+1、Context是什么？Context是”运行上下文环境“，从代码角度看Application，Service，Activity都是Context。
+
+2、所有Context都是在应用的主线程ActivityThread中创建的，由于Application，Service，Activity的祖先都是Context抽象类，所以在创建它们的同时也会为每一个类创建一个ContextImpl类，ContextImpl是Context的之类，真正实现Context功能方法的类。因此Application，Service，Activity都关联着一个ContextImpl对象。
+
+3、尽量少用Context对象去获取静态变量，静态方法，以及单例对象。以免导致内存泄漏。
+
+4、在创建与UI相关的地方，比如创建一个Dialog，或者在代码中创建一个TextView，都用Activity的Context去创建。然而在引用静态资源，创建静态方法，单例模式等情况下，使用生命周期更长的Application的Context才不会导致内存泄漏。
+
