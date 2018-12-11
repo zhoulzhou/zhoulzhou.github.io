@@ -24,12 +24,12 @@ git checkout .  舍弃当前目录中的所有的更改
 >git stash pop//恢复修改
 >修改的目录下：git add .
 >git commit 
->git push origin branch
+>git push origin HEAD:refs/for/branch
 
 #### 增补提交
 1、git commit -C HEAD --amend  (不用经过提交模块过程)
    git commit --amend
-2、git push origin branch
+2、git push origin HEAD:refs/for/branch
 
 #### ssh-keygen
 一路默认  然后在隐藏文件夹.ssh 找到key文件
