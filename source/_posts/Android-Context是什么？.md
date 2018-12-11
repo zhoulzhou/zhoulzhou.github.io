@@ -13,8 +13,11 @@ Context对于Android开发人员来说并不陌生，项目中我们会经常使
 相信很多人多会问Context到底是什么？
 
 >我们可以理解为“上下文”：它贯穿整个应用；
+
 >也可以理解成“运行环境”：它提供了一个应用运行所需要的信息，资源，系统服务等；
+
 >同样可以理解成“场景”：用户操作和系统交互这一过程就是一个场景，比如Activity之间的切换，服务的启动等都少不了Context。
+
 然而以上这些都是我们从抽象角度去理解Context的作用，那么从Code代码来看Context到底是什么呢？Activity是一个Context，Application是一个Context，Service也是一个Context你信么？不信的话，同样还是那句话“Read the fucking source code”。
 
 ```
