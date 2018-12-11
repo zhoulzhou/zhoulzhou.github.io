@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="MessageQueue属于低层类且依附于Looper，Looper外其他类不应该单独创建它，如果想使用MessageQueue可以从Looper类中得到它。 消息队列存储原理再上一章Message源码分析中我们知道了Message内部维持了一个链表缓存池来避免重复创建Message对象造成的额外消耗，以静态属性private static Message sPool作为缓存池链表头，Messag">
+<meta name="keywords" content="MessageQueue">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Handler机制 MessageQueue源码分析">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/10/Handler机制-MessageQueue源码分析/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="MessageQueue属于低层类且依附于Looper，Looper外其他类不应该单独创建它，如果想使用MessageQueue可以从Looper类中得到它。 消息队列存储原理再上一章Message源码分析中我们知道了Message内部维持了一个链表缓存池来避免重复创建Message对象造成的额外消耗，以静态属性private static Message sPool作为缓存池链表头，Messag">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-12-10T12:44:33.942Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Handler机制 MessageQueue源码分析">
+<meta name="twitter:description" content="MessageQueue属于低层类且依附于Looper，Looper外其他类不应该单独创建它，如果想使用MessageQueue可以从Looper类中得到它。 消息队列存储原理再上一章Message源码分析中我们知道了Message内部维持了一个链表缓存池来避免重复创建Message对象造成的额外消耗，以静态属性private static Message sPool作为缓存池链表头，Messag">
+
+
+
+
+
+
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/10/Handler机制-MessageQueue源码分析/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Handler机制 MessageQueue源码分析 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/10/Handler机制-MessageQueue源码分析/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Handler机制 MessageQueue源码分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-10 09:59:01 / 修改时间：20:44:33" itemprop="dateCreated datePublished" datetime="2018-12-10T09:59:01+08:00">2018-12-10</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Handler机制/" itemprop="url" rel="index"><span itemprop="name">Handler机制</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>MessageQueue属于低层类且依附于Looper，Looper外其他类不应该单独创建它，如果想使用MessageQueue可以从Looper类中得到它。</p>
+<h4 id="消息队列存储原理"><a href="#消息队列存储原理" class="headerlink" title="消息队列存储原理"></a>消息队列存储原理</h4><p>再上一章Message源码分析中我们知道了Message内部维持了一个链表缓存池来避免重复创建Message对象造成的额外消耗，以静态属性private static Message sPool作为缓存池链表头，Message next;作为链表的next指针。<br>有意思的是Message对象中next指针的不止用于链表缓存池，在MessageQueue中也采用同样的方法存储消息对象：</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public final <span class="keyword">class</span> MessageQueue &#123;</span><br><span class="line">    ......</span><br><span class="line">    Message mMessages;</span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码中的mMessages就是MessageQueue用来维持消息队列的链表头，至于它是如何存储的，后面再说。</p>
+<h4 id="使用JNI实现的native方法"><a href="#使用JNI实现的native方法" class="headerlink" title="使用JNI实现的native方法"></a>使用JNI实现的native方法</h4><p>MessageQueue的源码调用了多个的C/C++方法，这类方法使用前都会用关键字native声明一下。<br>这些方法所属的底层C++代码创建了属于native层自己的NativeMessageQueue和NativeLooper消息模型。它们对Java层作用其实就是控制线程是否阻塞。<br>当我们想要从MessageQueue中取出消息时，碰巧队列是空的或即将取出的消息还没到被处理时间，那么我们就需要将线程阻塞掉等待队列中有消息时再取出。<br>下面就是MessageQueue中的native方法：</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 初始化</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">long</span> <span class="title">nativeInit</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="comment">// 注销</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">nativeDestroy</span><span class="params">(<span class="keyword">long</span> ptr)</span></span>;</span><br><span class="line">    <span class="comment">// 让线程阻塞timeoutMillis毫秒</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="function"><span class="keyword">void</span> <span class="title">nativePollOnce</span><span class="params">(<span class="keyword">long</span> ptr, <span class="keyword">int</span> timeoutMillis)</span></span>; </span><br><span class="line">    <span class="comment">// 立刻唤醒线程</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">nativeWake</span><span class="params">(<span class="keyword">long</span> ptr)</span></span>;</span><br><span class="line">    <span class="comment">// 线程是否处于阻塞状态</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">boolean</span> <span class="title">nativeIsPolling</span><span class="params">(<span class="keyword">long</span> ptr)</span></span>;</span><br><span class="line">    <span class="comment">// 设置文件描述符</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">nativeSetFileDescriptorEvents</span><span class="params">(<span class="keyword">long</span> ptr, <span class="keyword">int</span> fd, <span class="keyword">int</span> events)</span></span>;</span><br></pre></td></tr></table></figure>
+<h4 id="文件描述符与ePoll指令"><a href="#文件描述符与ePoll指令" class="headerlink" title="文件描述符与ePoll指令"></a>文件描述符与ePoll指令</h4><p>消息队列里控制线程阻塞状态的native代码本质是用Linux指令ePoll完成的，在这之前需要先了解一点，Linux内核依靠“文件描述符（file descriptor）”来完成所有的文件读写访问操作，它更像是一个文件的索引值。而我们用到的ePoll指令就是用来监听文件描述符是否有可I/O操作的。（这都是一些Linux相关知识）</p>
+<h4 id="创建与销毁"><a href="#创建与销毁" class="headerlink" title="创建与销毁"></a>创建与销毁</h4><p>上面说了MessageQueue是依附于Looper的，所以本节分析的创建与销毁方法其实都是给Looper调用的，MessageQueue只提供了一个带参的构造方法来创建对象：<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 当前MessageQueue是否可以退出</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">boolean</span> mQuitAllowed;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// native层中NativeMessageQueue队列指针的地址</span></span><br><span class="line">    <span class="comment">// mPtr等于0时表示退出队列</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">long</span> mPtr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// native层代码，创建native层中NativeMessageQueue</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">long</span> <span class="title">nativeInit</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构造方法</span></span><br><span class="line">    MessageQueue(<span class="keyword">boolean</span> quitAllowed) &#123;</span><br><span class="line">        mQuitAllowed = quitAllowed;</span><br><span class="line">        <span class="comment">// 执行native层方法</span></span><br><span class="line">        mPtr = nativeInit();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>构造方法中boolean quitAllowed参数的意思是当前这个MessageQueue是否可以手动退出，为什么要控制能否手动退出呢？这里先说一个结论：Android 系统中要求UI线程不可手动退出，而其他Worker线程则全部都是可以的。（具体的操作在Looper和UI线程中）</p>
+<h4 id="那么退出是什么意思呢？"><a href="#那么退出是什么意思呢？" class="headerlink" title="那么退出是什么意思呢？"></a>那么退出是什么意思呢？</h4><p>退出就是当前这个MessageQueue停止服务，将队列中已存在的所有消息全部清空，看看源码中退出方法都做了什么：</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 是否已经退出了</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">boolean</span> mQuitting;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// native方法，退出队列</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">native</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">nativeDestroy</span><span class="params">(<span class="keyword">long</span> ptr)</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 退出队列</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">quit</span><span class="params">(<span class="keyword">boolean</span> safe)</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果不是可以手动退出的，抛出异常</span></span><br><span class="line">        <span class="keyword">if</span> (!mQuitAllowed) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Main thread not allowed to quit."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            <span class="comment">// 如果已经退出了直接结束方法</span></span><br><span class="line">            <span class="keyword">if</span> (mQuitting) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 标记为已退出状态</span></span><br><span class="line">            mQuitting = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 两种清除队列中消息的方法</span></span><br><span class="line">            <span class="keyword">if</span> (safe) &#123;</span><br><span class="line">                removeAllFutureMessagesLocked();</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                removeAllMessagesLocked();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 注销</span></span><br><span class="line">            nativeWake(mPtr);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>方法quit(boolean safe)中的参数safe决定了到底执行哪种清除消息的方法：</p>
+<blockquote>
+<p>removeAllMessagesLocked()，简单暴力直接清除掉队列中所有的消息。<br>removeAllFutureMessagesLocked()，清除掉可能还没有被处理的消息。</p>
+</blockquote>
+<p>removeAllMessagesLocked()方法的逻辑很简单，从队列头中取消息，有一个算一个，全部拿出来回收掉。：</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">void</span> <span class="title">removeAllMessagesLocked</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Message p = mMessages;</span><br><span class="line">        <span class="keyword">while</span> (p != <span class="keyword">null</span>) &#123;</span><br><span class="line">            Message n = p.next;</span><br><span class="line">            p.recycleUnchecked();</span><br><span class="line">            p = n;</span><br><span class="line">        &#125;</span><br><span class="line">        mMessages = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>然而，removeAllFutureMessagesLocked()方法的逻辑稍微多一点：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> removeAllFutureMessagesLocked() &#123;</span><br><span class="line">    </span><br><span class="line">        <span class="comment">// 获取当前系统时间</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">long</span> now = SystemClock.uptimeMillis();</span><br><span class="line">        Message p = mMessages;</span><br><span class="line">        <span class="keyword">if</span> (p != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// 判断当前消息对象的预处理时间是否晚于当前时间</span></span><br><span class="line">            <span class="keyword">if</span> (p.when &gt; now) &#123;</span><br><span class="line">                <span class="comment">// 如果当前消息对象的预处理时间晚于当前时间直接全部暴力清除</span></span><br><span class="line">                removeAllMessagesLocked();</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                Message n;</span><br><span class="line">                <span class="comment">// 如果当前消息对象的预处理时间并不晚于当前时间</span></span><br><span class="line">                <span class="comment">// 说明有可能这个消息正在被分发处理</span></span><br><span class="line">                <span class="comment">// 那么就跳过这个消息往后找晚于当前时间的消息</span></span><br><span class="line">                <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                    n = p.<span class="keyword">next</span>;</span><br><span class="line">                    <span class="keyword">if</span> (n == <span class="keyword">null</span>) &#123;</span><br><span class="line">                        <span class="keyword">return</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">if</span> (n.when &gt; now) &#123;</span><br><span class="line">                        <span class="comment">// 如果找到了晚于当前时间的消息结束循环</span></span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    p = n;</span><br><span class="line">                &#125;</span><br><span class="line">                p.<span class="keyword">next</span> = <span class="keyword">null</span>;</span><br><span class="line">                <span class="keyword">do</span> &#123;</span><br><span class="line">                    <span class="comment">// n就是那个晚于当前时间的消息</span></span><br><span class="line">                    <span class="comment">// 从n开始之后的消息全部回收</span></span><br><span class="line">                    p = n;</span><br><span class="line">                    n = p.<span class="keyword">next</span>;</span><br><span class="line">                    p.recycleUnchecked();</span><br><span class="line">                &#125; <span class="keyword">while</span> (n != <span class="keyword">null</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>这么看来这个方法名字起的还挺靠谱的，很好的解释了是要删除还没有被处理的消息。</p>
+<h4 id="消息入队管理enqueueMessage-方法"><a href="#消息入队管理enqueueMessage-方法" class="headerlink" title="消息入队管理enqueueMessage()方法"></a>消息入队管理enqueueMessage()方法</h4><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 消息入队</span></span><br><span class="line">    <span class="comment">// 参数when就是此消息应该被处理的时间</span></span><br><span class="line">    boolean enqueueMessage(Message msg, long <span class="keyword">when</span>) &#123;</span><br><span class="line">        <span class="comment">// 如果此消息的target也就是宿主handler是空的抛异常</span></span><br><span class="line">        <span class="keyword">if</span> (msg.target == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> new IllegalArgumentException(<span class="string">"Message must have a target."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果此消息是in-use状态抛异常，in-use的消息不可拿来使用</span></span><br><span class="line">        <span class="keyword">if</span> (msg.isInUse()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> new IllegalStateException(msg + <span class="string">" This message is already in use."</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//上锁</span></span><br><span class="line">        synchronized (<span class="keyword">this</span>) &#123;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果当前MessageQueue已经退出了抛异常并释放掉此消息</span></span><br><span class="line">            <span class="keyword">if</span> (mQuitting) &#123;</span><br><span class="line">                IllegalStateException e = new IllegalStateException(</span><br><span class="line">                        msg.target + <span class="string">" sending message to a Handler on a dead thread"</span>);</span><br><span class="line">                Log.w(TAG, e.getMessage(), e);</span><br><span class="line">                msg.recycle();</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 将消息标记为in-use状态</span></span><br><span class="line">            msg.markInUse();</span><br><span class="line">            <span class="comment">// 设置应该被处理的时间</span></span><br><span class="line">            msg.<span class="keyword">when</span> = <span class="keyword">when</span>;</span><br><span class="line">            <span class="comment">// 拿到队列头</span></span><br><span class="line">            Message p = mMessages;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 是否需要唤醒线程</span></span><br><span class="line">            boolean needWake;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// p等于空说明队列是空的</span></span><br><span class="line">            <span class="comment">// when等于0表示强制把此消息插入队列头部，最先处理</span></span><br><span class="line">            <span class="comment">// when小于队列头的when说明此消息应该被处理的时间比队列中第一个要处理的时间还早</span></span><br><span class="line">            <span class="comment">// 以上情况满足任意一种直接将消息插入队列头部</span></span><br><span class="line">            <span class="keyword">if</span> (p == <span class="literal">null</span> || <span class="keyword">when</span> == <span class="number">0</span> || <span class="keyword">when</span> &lt; p.<span class="keyword">when</span>) &#123;</span><br><span class="line">                <span class="comment">// 将消息插入队列头部</span></span><br><span class="line">                msg.next = p;</span><br><span class="line">                mMessages = msg;</span><br><span class="line">                needWake = mBlocked;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// 线程已经被阻塞&amp;&amp;消息存在宿主Handler&amp;&amp;消息是异步的</span></span><br><span class="line">                needWake = mBlocked &amp;&amp; p.target == <span class="literal">null</span> &amp;&amp; msg.isAsynchronous();</span><br><span class="line"></span><br><span class="line">            </span><br><span class="line">                <span class="comment">//如果上述条件都不满足就要按照消息应该被处理的时间插入队列中    </span></span><br><span class="line">                Message prev;</span><br><span class="line">                <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                    <span class="comment">// 两根相邻的引用一前一后从队列头开始依次向后移动</span></span><br><span class="line">                    prev = p;</span><br><span class="line">                    p = p.next;</span><br><span class="line">                    <span class="comment">// 如果队列到尾部了或者找到了处理时间早于自身的消息就结束循环</span></span><br><span class="line">                    <span class="keyword">if</span> (p == <span class="literal">null</span> || <span class="keyword">when</span> &lt; p.<span class="keyword">when</span>) &#123;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 如果入队的消息是异步的而排在它前面的消息有异步的就不需要唤醒</span></span><br><span class="line">                    <span class="keyword">if</span> (needWake &amp;&amp; p.isAsynchronous()) &#123;</span><br><span class="line">                        needWake = <span class="literal">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// 将新消息插在这一前一后两个引用中间，完成入队</span></span><br><span class="line">                msg.next = p; <span class="comment">// invariant: p == prev.next</span></span><br><span class="line">                prev.next = msg;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 判断是否需要唤醒线程</span></span><br><span class="line">            <span class="keyword">if</span> (needWake) &#123;</span><br><span class="line">                nativeWake(mPtr);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>总结一下消息入队的逻辑大致分为如下几步：</p>
+<p>1、检查消息合法性，包括宿主target是否为空，是否为in-use状态，队列是否还存活。<br>2、如果满足条件【队列为空、when等于0、此消息应被处理的时间比队列中第一个要处理的时间还早】中的任意一个直接将此消息插在队列头部最先被处理。<br>3、如果以上三个条件均不满足，那么就从头遍历队列根据被处理时间找到它的位置。</p>
+<h4 id="同步消息拦截器"><a href="#同步消息拦截器" class="headerlink" title="同步消息拦截器"></a>同步消息拦截器</h4><p>除了enqueueMessage()方法可以向队列中添加消息外，还有一个postSyncBarrier()方法也可以向队列添加消息，但它不是添加普通的消息，我们将它添加的特殊Message称为同步消息拦截器。<br>顾名思义，该拦截器只会影响同步消息。复习一下上节中分析到的东西，我们默认发送的消息都是同步的，只有某个Message被调用了setAsynchronous(true)后才是异步消息。同步消息受队列限制依次有序的等待处理，异步消息也不受限制。<br>消息拦截器与普通消息的差异在于拦截器的target是空的，正常我们通过enqueueMessage()方法入队的消息由于限制target是不能为空的。</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 标识拦截器的token</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> mNextBarrierToken;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> postSyncBarrier(<span class="keyword">long</span> when) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            <span class="comment">// 得到拦截器token</span></span><br><span class="line">            <span class="keyword">final</span> <span class="keyword">int</span> token = mNextBarrierToken++;</span><br><span class="line">            <span class="comment">// 实例化一个消息对象</span></span><br><span class="line">            <span class="keyword">final</span> Message msg = Message.obtain();</span><br><span class="line">            <span class="comment">// 将对象设置为in-use状态</span></span><br><span class="line">            msg.markInUse();</span><br><span class="line">            <span class="comment">// 设置时间</span></span><br><span class="line">            msg.when = when;</span><br><span class="line">            <span class="comment">// 将token存于消息的常用属性arg1中</span></span><br><span class="line">            msg.arg1 = token;</span><br><span class="line"></span><br><span class="line">            Message prev = <span class="keyword">null</span>;</span><br><span class="line">            Message p = mMessages;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果when不等于0就在队列中按时间找到它的位置</span></span><br><span class="line">            <span class="keyword">if</span> (when != <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">while</span> (p != <span class="keyword">null</span> &amp;&amp; p.when &lt;= when) &#123;</span><br><span class="line">                    prev = p;</span><br><span class="line">                    p = p.<span class="keyword">next</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 如果prev不等于空就把拦截器插入</span></span><br><span class="line">            <span class="comment">// 如果prev等于空直接插入队列头部</span></span><br><span class="line">            <span class="keyword">if</span> (prev != <span class="keyword">null</span>) &#123; <span class="comment">// invariant: p == prev.next</span></span><br><span class="line">                msg.<span class="keyword">next</span> = p;</span><br><span class="line">                prev.<span class="keyword">next</span> = msg;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                msg.<span class="keyword">next</span> = p;</span><br><span class="line">                mMessages = msg;</span><br><span class="line">            &#125;</span><br><span class="line">          </span><br><span class="line">            <span class="comment">// 拦截器入队成功，返回对应token</span></span><br><span class="line">            <span class="keyword">return</span> token;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>总体来说添加拦截器的方法跟正常消息入队差不多，值得一提的就是Message的target是空的，然后arg1保存着拦截器的唯一标识token。</p>
+<p>token的作用是找到对应的拦截器删除，看看删除拦截器的方法。</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> removeSyncBarrier(<span class="keyword">int</span> token) &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            Message prev = <span class="keyword">null</span>;</span><br><span class="line">            Message p = mMessages;</span><br><span class="line">            <span class="comment">// 遍历队列找到指定拦截器</span></span><br><span class="line">            <span class="comment">// 查找条件：target为空，arg1等于指定token值</span></span><br><span class="line">            <span class="keyword">while</span> (p != <span class="keyword">null</span> &amp;&amp; (p.target != <span class="keyword">null</span> || p.arg1 != token)) &#123;</span><br><span class="line">                prev = p;</span><br><span class="line">                p = p.<span class="keyword">next</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 如果p等于空说明没找到</span></span><br><span class="line">            <span class="keyword">if</span> (p == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"The specified message queue synchronization "</span></span><br><span class="line">                        + <span class="string">" barrier token has not been posted or has already been removed."</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 是否需要唤醒线程</span></span><br><span class="line">            <span class="keyword">final</span> <span class="keyword">boolean</span> needWake;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 在队列中移除掉拦截器</span></span><br><span class="line">            <span class="keyword">if</span> (prev != <span class="keyword">null</span>) &#123;</span><br><span class="line">                prev.<span class="keyword">next</span> = p.<span class="keyword">next</span>;</span><br><span class="line">                <span class="comment">// 如果prev不等于空说明拦截器前面还有别的消息，就不需要唤醒</span></span><br><span class="line">                needWake = <span class="keyword">false</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                mMessages = p.<span class="keyword">next</span>;</span><br><span class="line">                <span class="comment">// 拦截器在队列头部，移除它之后如果队列空了或者它的下一个消息是个正常消息就需要唤醒</span></span><br><span class="line">                needWake = mMessages == <span class="keyword">null</span> || mMessages.target != <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 回收</span></span><br><span class="line">            p.recycleUnchecked();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 判断是否需要唤醒</span></span><br><span class="line">            <span class="keyword">if</span> (needWake &amp;&amp; !mQuitting) &#123;</span><br><span class="line">                nativeWake(mPtr);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="队列空闲处理器IdleHandler"><a href="#队列空闲处理器IdleHandler" class="headerlink" title="队列空闲处理器IdleHandler"></a>队列空闲处理器IdleHandler</h4><p>于在从队列中取出消息时队里可能是空的，这时候就会阻塞线程等待消息到来。每次队列中没有消息而进入的阻塞状态，我们叫它为“空闲状态”。<br>讲道理实际使用中队列空闲状态的情况还是很常见的，为了更好的利用资源，也为了更好的掌握线程的状态，开发人员就设计了这么一个“队列空闲处理器IdleHandler”。<br>IdleHandler是MessageQueue类下的一个子接口，只包含了一个方法：</p>
+<figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">interface</span> <span class="title">IdleHandler</span> </span>&#123;</span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * 当线程的MessageQueue等待更多消息时会调用该方法。</span></span><br><span class="line"><span class="comment">         *</span></span><br><span class="line"><span class="comment">         * 返回值：true代表只执行一次，false代表会一直执行它</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">boolean</span> queueIdle();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>MessageQueue为我们提供了添加和删除IdleHandler的方法：</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//使用一个ArrayList存储IdleHandler</span></span><br><span class="line">   <span class="keyword">private</span> <span class="keyword">final</span> ArrayList&lt;IdleHandler&gt; mIdleHandlers = <span class="keyword">new</span> ArrayList&lt;IdleHandler&gt;();</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 添加一个IdleHandler</span></span><br><span class="line">   <span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">addIdleHandler</span><span class="params">(@NonNull IdleHandler <span class="keyword">handler</span>)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">handler</span> == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"Can't add a null IdleHandler"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            mIdleHandlers.add(<span class="keyword">handler</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 删除一个IdleHandler</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">removeIdleHandler</span><span class="params">(@NonNull IdleHandler <span class="keyword">handler</span>)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            mIdleHandlers.remove(<span class="keyword">handler</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="消息出队管理next-方法"><a href="#消息出队管理next-方法" class="headerlink" title="消息出队管理next()方法"></a>消息出队管理next()方法</h4><p>next()方法很长，先大致看一下源码：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> IdleHandler[] mPendingIdleHandlers;</span><br><span class="line"></span><br><span class="line">    Message <span class="keyword">next</span>() &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// mPtr是从native方法中得到的NativeMessageQueue地址</span></span><br><span class="line">       <span class="comment">// 如果mPtr等于0说明队列不存在或被清除掉了</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">long</span> ptr = mPtr;</span><br><span class="line">        <span class="keyword">if</span> (ptr == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 待处理的IdleHandler数量，因为代表数量，所以只有第一次初始化时为-1</span></span><br><span class="line">        <span class="keyword">int</span> pendingIdleHandlerCount = -<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 线程将被阻塞的时间</span></span><br><span class="line">        <span class="comment">// -1：一直阻塞</span></span><br><span class="line">        <span class="comment">// 0：不阻塞</span></span><br><span class="line">        <span class="comment">// &gt;0:阻塞nextPollTimeoutMillis 毫秒</span></span><br><span class="line">        <span class="keyword">int</span> nextPollTimeoutMillis = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 开始死循环，下面的代码都是在循环中，贼长！</span></span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果nextPollTimeoutMillis 不等于0说明要阻塞线程了</span></span><br><span class="line">            <span class="keyword">if</span> (nextPollTimeoutMillis != <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="comment">// 为即将长时间阻塞做准备把该释放的对象都释放了</span></span><br><span class="line">                Binder.flushPendingCommands();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 阻塞线程操作</span></span><br><span class="line">            nativePollOnce(ptr, nextPollTimeoutMillis);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">                <span class="comment">// 得到当前时间</span></span><br><span class="line">                <span class="keyword">final</span> <span class="keyword">long</span> now = SystemClock.uptimeMillis();</span><br><span class="line"></span><br><span class="line">                Message prevMsg = <span class="keyword">null</span>;</span><br><span class="line">                Message msg = mMessages;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 判断队列头是不是同步拦截器</span></span><br><span class="line">                <span class="keyword">if</span> (msg != <span class="keyword">null</span> &amp;&amp; msg.target == <span class="keyword">null</span>) &#123;</span><br><span class="line">                    <span class="comment">// 如果是拦截器就向后找一个异步消息</span></span><br><span class="line">                    <span class="keyword">do</span> &#123;</span><br><span class="line">                        prevMsg = msg;</span><br><span class="line">                        msg = msg.<span class="keyword">next</span>;</span><br><span class="line">                    &#125; <span class="keyword">while</span> (msg != <span class="keyword">null</span> &amp;&amp; !msg.isAsynchronous());</span><br><span class="line">                &#125;</span><br><span class="line">    </span><br><span class="line">                <span class="comment">// 判断队列是否有可以取出的消息</span></span><br><span class="line">                <span class="keyword">if</span> (msg != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">if</span> (now &lt; msg.when) &#123;</span><br><span class="line">                        <span class="comment">// 如果待取出的消息还没有到应该被处理的时间就让线程阻塞到应该被处理的时间</span></span><br><span class="line">                        nextPollTimeoutMillis = (<span class="keyword">int</span>) Math.min(msg.when - now, Integer.MAX_VALUE);</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        <span class="comment">// 直接就能取出消息，所以不用阻塞线程</span></span><br><span class="line">                        mBlocked = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">                        将消息从队列中剥离出来</span><br><span class="line">                        <span class="keyword">if</span> (prevMsg != <span class="keyword">null</span>) &#123;</span><br><span class="line">                            prevMsg.<span class="keyword">next</span> = msg.<span class="keyword">next</span>;</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            mMessages = msg.<span class="keyword">next</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">// 让消息脱离队列</span></span><br><span class="line">                        msg.<span class="keyword">next</span> = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">                        <span class="keyword">if</span> (DEBUG) Log.v(TAG, <span class="string">"Returning message: "</span> + msg);</span><br><span class="line">                        </span><br><span class="line">                        <span class="comment">// 设置为in-use状态</span></span><br><span class="line">                        msg.markInUse();</span><br><span class="line">                        <span class="comment">// 返回取出的消息，结束循环，结束next()方法</span></span><br><span class="line">                        <span class="keyword">return</span> msg;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">// 队列中没有可取出的消息，nextPollTimeoutMillis 等于-1让线程一直阻塞</span></span><br><span class="line">                    nextPollTimeoutMillis = -<span class="number">1</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 如果队列已经退出了直接注销和结束方法</span></span><br><span class="line">                <span class="keyword">if</span> (mQuitting) &#123;</span><br><span class="line">                    dispose();</span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// IdleHandler初始化为-1，所以在本循环中该条件成立的次数 &lt;= 1</span></span><br><span class="line">                <span class="keyword">if</span> (pendingIdleHandlerCount &lt; <span class="number">0</span> &amp;&amp; (mMessages == <span class="keyword">null</span> || now &lt; mMessages.when)) &#123;</span><br><span class="line">                    <span class="comment">// 得到IdleHandler的数量</span></span><br><span class="line">                    pendingIdleHandlerCount = mIdleHandlers.<span class="keyword">size</span>();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// pendingIdleHandlerCount 小于或等于0说明既没有合适的消息也没有合适的闲时处理</span></span><br><span class="line">                <span class="keyword">if</span> (pendingIdleHandlerCount &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="comment">// 直接进入下次循环阻塞线程</span></span><br><span class="line">                    mBlocked = <span class="keyword">true</span>;</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 代码执行到此处就说明线程中有待处理的IdleHandler</span></span><br><span class="line">                <span class="comment">// 那么就从IdleHandler集合列表中取出待处理的IdleHandler</span></span><br><span class="line">                <span class="keyword">if</span> (mPendingIdleHandlers == <span class="keyword">null</span>) &#123;</span><br><span class="line">                    <span class="comment">// 初始化待处理IdleHandler数组，最小长度为4</span></span><br><span class="line">                    mPendingIdleHandlers = <span class="keyword">new</span> IdleHandler[Math.max(pendingIdleHandlerCount, <span class="number">4</span>)];</span><br><span class="line">                &#125;</span><br><span class="line">    </span><br><span class="line">                <span class="comment">// 从IdleHandler集合中获取待处理的IdleHandler</span></span><br><span class="line">                mPendingIdleHandlers = mIdleHandlers.toArray(mPendingIdleHandlers);</span><br><span class="line">            &#125;</span><br><span class="line">          </span><br><span class="line">            <span class="comment">// ==========到此处同步代码块已经结束==========</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; pendingIdleHandlerCount; i++) &#123;</span><br><span class="line">                <span class="comment">// 取出一个IdleHandler</span></span><br><span class="line">                <span class="keyword">final</span> IdleHandler idler = mPendingIdleHandlers[i];</span><br><span class="line">                <span class="comment">// 释放掉引用</span></span><br><span class="line">                mPendingIdleHandlers[i] = <span class="keyword">null</span>; </span><br><span class="line"></span><br><span class="line">                <span class="comment">// IdleHandler的执行模式，true=执行一次，false=总是执行</span></span><br><span class="line">                <span class="keyword">boolean</span> keep = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">// 执行IdleHandler的queueIdle()代码，得到执行模式</span></span><br><span class="line">                    keep = idler.queueIdle();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                    Log.wtf(TAG, <span class="string">"IdleHandler threw exception"</span>, t);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 通过执行模式判断是否需要移除掉对应的IdleHandler</span></span><br><span class="line">                <span class="keyword">if</span> (!keep) &#123;</span><br><span class="line">                    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">                        mIdleHandlers.remove(idler);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 处理完了所有IdleHandler把数量清0</span></span><br><span class="line">            pendingIdleHandlerCount = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 因为执行了IdleHandler的代码块，有可能已经有新的消息入队了</span></span><br><span class="line">            <span class="comment">// 所以到这里就不阻塞线程，直接去查看有没有新消息</span></span><br><span class="line">            nextPollTimeoutMillis = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>消息出队的核心代码的逻辑都在一个庞大的死循环for(;;)中，其流程如下：<br>0，循环开始。<br>1，根据nextPollTimeoutMillis值阻塞线程，初始值为0：不阻塞线程。<br>2，将【待取出消息指针】指向队列头。<br>3，如果队列头是同步拦截器的话就将【待取出消息指针】指向队列头后面最近的一个异步消息。<br>4，如果【待取出消息指针】不可用（msg == null）说明队列中没有可取出的消息，让nextPollTimeoutMillis 等于-1让线程一直阻塞，等待新消息到来时唤醒它。<br>5，如果【待取出消息指针】可用（msg != null）再判断一下消息的待处理时间。</p>
+<p>  如果消息的待处理时间大于当前时间（now &lt; msg.when）说明当前消息还没到要处理的时间，让线程阻塞到消息待处理的指定时间。<br>  如果消息的待处理时间小于当前时间（now &gt; msg.when）就直接从队列中取出消息返回给调用处。（此处会直接结束整个循环，结束next()方法。）</p>
+<p>6，如果队列已经退出了直接结束next()方法。<br>7，如果是第一次循环就初始化IdleHandler数量的局部变量pendingIdleHandlerCount 。<br>8，如果IdleHandler数量小于等于0说明没有合适的IdleHandler，直接进入下次循环阻塞线程。（此处会直接结束本次循环。）<br>9，初始化IdleHandler数组，里面保存着本地待处理的IdleHandler。<br>10，遍历IdleHandler数组，执行对应的queueIdle()方法。<br>11，执行完所有IdleHandler之后，将IdleHandler数量清0。<br>12，因为执行了IdleHandler的代码块，有可能已经有新的消息入队了， 所以让nextPollTimeoutMillis 等于0不阻塞线程，直接去查看有没有新消息。<br>13，本次循环结束，开始新一轮循环。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><blockquote>
+<p>MessageQueue队列消息是有序的，按消息待处理时间依次排序。<br>同步拦截器可以拦截它之后的所有同步消息，直到这个拦截器被移除。<br>取出消息时如果没有合适的消息线程会阻塞。</p>
+</blockquote>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MessageQueue/" rel="tag"># MessageQueue</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/08/Handler机制-Message源码分析/" rel="next" title="Handler机制-Message源码分析">
+                <i class="fa fa-chevron-left"></i> Handler机制-Message源码分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/10/Handler机制-Looper源码分析/" rel="prev" title="Handler机制 Looper源码分析">
+                Handler机制 Looper源码分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">64</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">35</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#消息队列存储原理"><span class="nav-number">1.</span> <span class="nav-text">消息队列存储原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用JNI实现的native方法"><span class="nav-number">2.</span> <span class="nav-text">使用JNI实现的native方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件描述符与ePoll指令"><span class="nav-number">3.</span> <span class="nav-text">文件描述符与ePoll指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建与销毁"><span class="nav-number">4.</span> <span class="nav-text">创建与销毁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#那么退出是什么意思呢？"><span class="nav-number">5.</span> <span class="nav-text">那么退出是什么意思呢？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#消息入队管理enqueueMessage-方法"><span class="nav-number">6.</span> <span class="nav-text">消息入队管理enqueueMessage()方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#同步消息拦截器"><span class="nav-number">7.</span> <span class="nav-text">同步消息拦截器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#队列空闲处理器IdleHandler"><span class="nav-number">8.</span> <span class="nav-text">队列空闲处理器IdleHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#消息出队管理next-方法"><span class="nav-number">9.</span> <span class="nav-text">消息出队管理next()方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">10.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
