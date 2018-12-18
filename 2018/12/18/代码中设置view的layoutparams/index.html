@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="LayoutParams分类和作用 LayoutParams是ViewGroup类中的子类,而ViewGroup我们都知道,它是容纳组件的容器。比如说:LinearLayout,ListView都是继承ViewGroup的。LayoutParams主要设置的是子view在父类布局的参数,有如下两种方式:  (1)通过XML文件定义  123456789101112 &amp;lt;relativelayo">
+<meta name="keywords" content="LayoutParams">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代码中设置view的layoutparams">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/18/代码中设置view的layoutparams/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="LayoutParams分类和作用 LayoutParams是ViewGroup类中的子类,而ViewGroup我们都知道,它是容纳组件的容器。比如说:LinearLayout,ListView都是继承ViewGroup的。LayoutParams主要设置的是子view在父类布局的参数,有如下两种方式:  (1)通过XML文件定义  123456789101112 &amp;lt;relativelayo">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-12-18T13:10:28.473Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="代码中设置view的layoutparams">
+<meta name="twitter:description" content="LayoutParams分类和作用 LayoutParams是ViewGroup类中的子类,而ViewGroup我们都知道,它是容纳组件的容器。比如说:LinearLayout,ListView都是继承ViewGroup的。LayoutParams主要设置的是子view在父类布局的参数,有如下两种方式:  (1)通过XML文件定义  123456789101112 &amp;lt;relativelayo">
+
+
+
+
+
+
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/18/代码中设置view的layoutparams/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>代码中设置view的layoutparams | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/18/代码中设置view的layoutparams/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">代码中设置view的layoutparams
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-18 21:02:20 / 修改时间：21:10:28" itemprop="dateCreated datePublished" datetime="2018-12-18T21:02:20+08:00">2018-12-18</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="LayoutParams分类和作用"><a href="#LayoutParams分类和作用" class="headerlink" title="LayoutParams分类和作用"></a>LayoutParams分类和作用</h4><p> LayoutParams是ViewGroup类中的子类,而ViewGroup我们都知道,它是容纳组件的容器。比如说:LinearLayout,ListView都是继承ViewGroup的。LayoutParams主要设置的是子view在父类布局的参数,有如下两种方式:</p>
+<p> <strong>(1)通过XML文件定义</strong></p>
+ <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> <span class="tag">&lt;<span class="name">relativelayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span> </span></span><br><span class="line"><span class="tag"> <span class="attr">xmlns:tools</span>=<span class="string">"http://schemas.android.com/tools"</span> </span></span><br><span class="line"><span class="tag"> <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span> </span></span><br><span class="line"><span class="tag"> <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span>&gt;</span></span><br><span class="line"> </span><br><span class="line">    <span class="tag">&lt;<span class="name">textview</span> </span></span><br><span class="line"><span class="tag">	<span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span> </span></span><br><span class="line"><span class="tag">	<span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span> </span></span><br><span class="line"><span class="tag">	<span class="attr">android:text</span>=<span class="string">"xiaotang"</span>&gt;</span></span><br><span class="line"> </span><br><span class="line">    <span class="tag">&lt;/<span class="name">textview</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">relativelayout</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>可以看到,TextView需要设置layout_width和layout_height参数,才能在父布局中显示出来。</p>
+<p><strong>(2)通过java代码添加View</strong></p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">		RelativeLayout contentView = (RelativeLayout) View.inflate(<span class="keyword">this</span>,</span><br><span class="line">				R.layout.activity_main, <span class="keyword">null</span>);</span><br><span class="line">		TextView tv = <span class="keyword">new</span> TextView(<span class="keyword">this</span>);</span><br><span class="line">		RelativeLayout.LayoutParams lp = <span class="keyword">new</span> RelativeLayout.LayoutParams(</span><br><span class="line">				<span class="keyword">new</span> LayoutParams(<span class="number">-1</span>, <span class="number">-1</span>));</span><br><span class="line">		tv.setText(<span class="string">"xiaotang"</span>);</span><br><span class="line">		contentView.addView(tv);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到在java代码中添加view,需要设置其在父布局中的布局参数,才能顺利显示出来.当然在这里,你不申明lp布局参数也可,contentView.addView(tv)会判断你是否设置view的布局参数，若没设置,则默认提供Warp_content类的布局参数.那么View的LayoutParams为什么要设置成RelativeLayout类型呢？后面我们会详细讨论的.</p>
+<h4 id="View的LayoutParams与父类的关系"><a href="#View的LayoutParams与父类的关系" class="headerlink" title="View的LayoutParams与父类的关系"></a>View的LayoutParams与父类的关系</h4><p><strong>View的LayoutParams设置在父类里面才能起到效果.</strong>大家应该重视这句话,你真正理解了这句话了吗？</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">super</span>.onCreate(savedInstanceState);</span><br><span class="line">		RelativeLayout contentView = (RelativeLayout) View.inflate(<span class="keyword">this</span>,</span><br><span class="line">				R.layout.activity_main, <span class="keyword">null</span>);</span><br><span class="line">		View view = View.inflate(<span class="keyword">this</span>, R.layout.textview, <span class="keyword">null</span>);</span><br><span class="line">		RelativeLayout.LayoutParams lp = <span class="keyword">new</span> RelativeLayout.LayoutParams(</span><br><span class="line">				<span class="keyword">new</span> LayoutParams(LayoutParams.FILL_PARENT,</span><br><span class="line">						LayoutParams.FILL_PARENT));</span><br><span class="line">		view.setLayoutParams(lp);</span><br><span class="line">		contentView.addView(view);</span><br><span class="line">		setContentView(contentView);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="为什么view的LayoutParams要是父容器的的LayoutParams"><a href="#为什么view的LayoutParams要是父容器的的LayoutParams" class="headerlink" title="为什么view的LayoutParams要是父容器的的LayoutParams"></a>为什么view的LayoutParams要是父容器的的LayoutParams</h4><p>大家看我上面的举的实例中,细心的你就会发现。为什么view放在contentView中，申明的lp(布局参数)都是RelativeLayout类的？原因就是装载该View的容器就是RelativeLayout.<br>我们再看看下面这个例子:</p>
+<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Display <span class="built_in">display</span> = <span class="keyword">this</span>.getWindowManager().getDefaultDisplay();</span><br><span class="line">		<span class="keyword">int</span> <span class="built_in">width</span> = <span class="built_in">display</span>.getWidth(); <span class="comment">// 获取屏幕宽度</span></span><br><span class="line">		<span class="keyword">int</span> <span class="built_in">height</span> = <span class="built_in">display</span>.getHeight(); <span class="comment">// 获取屏幕高度</span></span><br><span class="line">		View head = View.inflate(<span class="keyword">this</span>, R.layout.head, null);</span><br><span class="line">		AbsListView.LayoutParams layoutParams = <span class="keyword">new</span> AbsListView.LayoutParams(</span><br><span class="line">				AbsListView.LayoutParams.MATCH_PARENT, <span class="keyword">this</span>.getResources()</span><br><span class="line">						.getDimensionPixelOffset(R.dimen.top_bg_height));</span><br><span class="line">		head.setLayoutParams(layoutParams);</span><br><span class="line">		listView.addHeaderView(head);</span><br></pre></td></tr></table></figure>
+<p>是ListView添加View的例子,可以看到view的LayoutParams的类型就是AbsListView(ListView继承AbsListView并且在ListView中没有修改该LayoutParams).</p>
+<p><strong>原因分析:</strong><br>     我们都知道,每一个视图的绘制过程都必须经历三个最主要的阶段，即onMeasure()、onLayout()和onDraw(),父容器不仅要负责自己的显示，而且还要遍历取负责子组件的显示.我们查看容器的onMeasure()方法就能看到有如下操作:<br>这里以RelativeLayout为例:</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LayoutParams params = <span class="comment">(LayoutParams)</span> child.getLayoutParams<span class="comment">()</span>;  <span class="comment">//这里的LayoutParams是RelativeLayout类型</span></span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/LayoutParams/" rel="tag"># LayoutParams</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/14/减少该死的if-else-嵌套/" rel="next" title="减少该死的if else 嵌套">
+                <i class="fa fa-chevron-left"></i> 减少该死的if else 嵌套
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">66</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">37</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#LayoutParams分类和作用"><span class="nav-number">1.</span> <span class="nav-text">LayoutParams分类和作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#View的LayoutParams与父类的关系"><span class="nav-number">2.</span> <span class="nav-text">View的LayoutParams与父类的关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么view的LayoutParams要是父容器的的LayoutParams"><span class="nav-number">3.</span> <span class="nav-text">为什么view的LayoutParams要是父容器的的LayoutParams</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
