@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="要为辅助显示屏创建独特的内容:  您需要扩展Presentation类，并实现onCreate()回调方法。在onCreate()中，调用setContentView()来指定您要在辅助显示屏上显示的UI。  作为Dialog类的扩展，Presentation类提供了一个区域，在其中，您的应用可以在辅助显示屏上显示不同的UI。   获取显示Presentation的辅助显示屏：  可以使用Disp">
+<meta name="keywords" content="presentation,双屏异显">
+<meta property="og:type" content="article">
+<meta property="og:title" content="android presentation双屏异显">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/19/android-presentation双屏异显/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="要为辅助显示屏创建独特的内容:  您需要扩展Presentation类，并实现onCreate()回调方法。在onCreate()中，调用setContentView()来指定您要在辅助显示屏上显示的UI。  作为Dialog类的扩展，Presentation类提供了一个区域，在其中，您的应用可以在辅助显示屏上显示不同的UI。   获取显示Presentation的辅助显示屏：  可以使用Disp">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-12-19T13:34:36.174Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="android presentation双屏异显">
+<meta name="twitter:description" content="要为辅助显示屏创建独特的内容:  您需要扩展Presentation类，并实现onCreate()回调方法。在onCreate()中，调用setContentView()来指定您要在辅助显示屏上显示的UI。  作为Dialog类的扩展，Presentation类提供了一个区域，在其中，您的应用可以在辅助显示屏上显示不同的UI。   获取显示Presentation的辅助显示屏：  可以使用Disp">
+
+
+
+
+
+
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/19/android-presentation双屏异显/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>android presentation双屏异显 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/19/android-presentation双屏异显/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">android presentation双屏异显
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-19 13:53:07 / 修改时间：21:34:36" itemprop="dateCreated datePublished" datetime="2018-12-19T13:53:07+08:00">2018-12-19</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>要为辅助显示屏创建独特的内容:</p>
+<ol>
+<li><p>您需要扩展Presentation类，并实现onCreate()回调方法。在onCreate()中，调用setContentView()来指定您要在辅助显示屏上显示的UI。</p>
+</li>
+<li><p>作为Dialog类的扩展，Presentation类提供了一个区域，在其中，您的应用可以在辅助显示屏上显示不同的UI。</p>
+</li>
+</ol>
+<p>获取显示Presentation的辅助显示屏：</p>
+<ol>
+<li><p>可以使用DisplayManager或者MediaRouter的API。其中，使用DisplayManagerAPI可以使您获得当前连接的所有显示屏的枚举，而MediaRouter则可以使您直接访问系统为Presentation设置的默认显示输出。</p>
+</li>
+<li><p>可以给MediaRouter.getSelectedRoute()传一个ROUTE_TYPE_LIVE_VIDEO来获得演示的默认显示器。它将返回一个MediaRouter.RouteInfo对象，描述了系统为视频演示所选择的当前路由。如果MediaRouter.RouteInfo不空，调用getPresentationDisplay()即可获取当前连接的显示屏对象：Display。</p>
+</li>
+<li><p>然后，您可以将这个Display对象传入Presentation的构造函数。调用Presentation.show()方法，演示就会出现在辅助显示屏上了。</p>
+</li>
+</ol>
+<p>为在运行时即时检测新接入的显示器，需要先创建一个MediaRouter.SimpleCallback的实例。在其中，您需要实现onRoutePresentationDisplayChanged()回调方法。当新的显示器连接时，系统会调用这个回调方法。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">private final MediaRouter.SimpleCallback mMediaRouterCallback =</span><br><span class="line">            new MediaRouter.SimpleCallback() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onRouteSelected(MediaRouter router, int type, RouteInfo info) &#123;</span><br><span class="line">            Log.d(TAG, <span class="string">"onRouteSelected: type="</span> +<span class="built_in"> type </span>+ <span class="string">", info="</span> + info);</span><br><span class="line">            updatePresentation();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void onRouteUnselected(MediaRouter router, int type, RouteInfo info) &#123;</span><br><span class="line">            Log.d(TAG, <span class="string">"onRouteUnselected: type="</span> +<span class="built_in"> type </span>+ <span class="string">", info="</span> + info);</span><br><span class="line">            updatePresentation();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void onRoutePresentationDisplayChanged(MediaRouter router, RouteInfo info) &#123;</span><br><span class="line">            Log.d(TAG, <span class="string">"onRoutePresentationDisplayChanged: info="</span> + info);</span><br><span class="line">            updatePresentation();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="literal">void</span> updatePresentation() &#123;</span><br><span class="line">        <span class="comment">// Get the current route and its presentation display.</span></span><br><span class="line">        MediaRouter.RouteInfo route = mMediaRouter.getSelectedRoute(</span><br><span class="line">                MediaRouter.ROUTE_TYPE_LIVE_VIDEO);</span><br><span class="line">        Display presentationDisplay = route != <span class="built_in">null</span> ? route.getPresentationDisplay() : <span class="built_in">null</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Dismiss the current presentation if the display has changed.</span></span><br><span class="line">        <span class="keyword">if</span> (mPresentation != <span class="built_in">null</span> &amp;&amp; mPresentation.getDisplay() != presentationDisplay) &#123;</span><br><span class="line">            <span class="keyword">Log</span>.i(<span class="built_in">TAG</span>, <span class="string">"Dismissing presentation because the current route no longer "</span></span><br><span class="line">                    + <span class="string">"has a presentation display."</span>);</span><br><span class="line">            mPresentation.dismiss();</span><br><span class="line">            mPresentation = <span class="built_in">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Show a new presentation if needed.</span></span><br><span class="line">        <span class="keyword">if</span> (mPresentation == <span class="built_in">null</span> &amp;&amp; presentationDisplay != <span class="built_in">null</span>) &#123;</span><br><span class="line">            <span class="keyword">Log</span>.i(<span class="built_in">TAG</span>, <span class="string">"Showing presentation on display: "</span> + presentationDisplay);</span><br><span class="line">            mPresentation = <span class="literal">new</span> DemoPresentation(this, presentationDisplay);</span><br><span class="line">            mPresentation.setOnDismissListener(mOnDismissListener);</span><br><span class="line">            try &#123;</span><br><span class="line">                mPresentation.show();</span><br><span class="line">            &#125; catch (WindowManager.InvalidDisplayException ex) &#123;</span><br><span class="line">                <span class="keyword">Log</span>.w(<span class="built_in">TAG</span>, <span class="string">"Couldn't show presentation!  Display was removed in "</span></span><br><span class="line">                        + <span class="string">"the meantime."</span>, ex);</span><br><span class="line">                mPresentation = <span class="built_in">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Update the contents playing in this activity.</span></span><br><span class="line">        updateContents();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">private</span> <span class="selector-tag">void</span> <span class="selector-tag">updateContents</span>() &#123;</span><br><span class="line">        <span class="comment">// Show either the content in the main activity or the content in the presentation</span></span><br><span class="line">        <span class="comment">// along with some descriptive text about what is happening.</span></span><br><span class="line">        <span class="selector-tag">if</span> (mPresentation != null) &#123;</span><br><span class="line">            <span class="selector-tag">mInfoTextView</span><span class="selector-class">.setText</span>(getResources().getString(</span><br><span class="line">                    R.string.presentation_with_media_router_now_playing_remotely,</span><br><span class="line">                    mPresentation.getDisplay().getName()));</span><br><span class="line">            <span class="selector-tag">mSurfaceView</span><span class="selector-class">.setVisibility</span>(View.INVISIBLE);</span><br><span class="line">            <span class="selector-tag">mSurfaceView</span><span class="selector-class">.onPause</span>();</span><br><span class="line">            <span class="selector-tag">if</span> (mPaused) &#123;</span><br><span class="line">                <span class="selector-tag">mPresentation</span><span class="selector-class">.getSurfaceView</span>()<span class="selector-class">.onPause</span>();</span><br><span class="line">            &#125; <span class="selector-tag">else</span> &#123;</span><br><span class="line">                <span class="selector-tag">mPresentation</span><span class="selector-class">.getSurfaceView</span>()<span class="selector-class">.onResume</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="selector-tag">else</span> &#123;</span><br><span class="line">            <span class="selector-tag">mInfoTextView</span><span class="selector-class">.setText</span>(getResources().getString(</span><br><span class="line">                    R.string.presentation_with_media_router_now_playing_locally,</span><br><span class="line">                    getWindowManager().getDefaultDisplay().getName()));</span><br><span class="line">            <span class="selector-tag">mSurfaceView</span><span class="selector-class">.setVisibility</span>(View.VISIBLE);</span><br><span class="line">            <span class="selector-tag">if</span> (mPaused) &#123;</span><br><span class="line">                <span class="selector-tag">mSurfaceView</span><span class="selector-class">.onPause</span>();</span><br><span class="line">            &#125; <span class="selector-tag">else</span> &#123;</span><br><span class="line">                <span class="selector-tag">mSurfaceView</span><span class="selector-class">.onResume</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>为针对辅助显示进一步优化Presentation的UI，您需要为您的应用或activity指定标签为android:presentationTheme主题。</p>
+<p><strong>请留意</strong><br>注意：public Presentation (Context outerContext, Display display) 这个初始化函数，这里的outerContext必须要activity，一个activity的context，虽然presentation会创建自己的context，但是它是在这个参数context之上的，而且这个activity跳转后presentation就消失了，如果说用getApplicationContext()就直接报错，也不行。</p>
+<p>连接到用户移动设备的屏幕往往有较大的屏幕尺寸和不同的屏幕密度。由于屏幕特征可能不同，您需要为大型显示设备提供特定优化的资源。如果您需要从Presentation中获取额外的资源，调用getContext().getResources()来获取针对这种显示的资源对象。这样，您的应用就可以根据辅助显示器的尺寸和密度提供最合适的资源了。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/presentation/" rel="tag"># presentation</a>
+          
+            <a href="/tags/双屏异显/" rel="tag"># 双屏异显</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/19/LoaderManager用法/" rel="next" title="LoaderManager用法">
+                <i class="fa fa-chevron-left"></i> LoaderManager用法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">69</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">41</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

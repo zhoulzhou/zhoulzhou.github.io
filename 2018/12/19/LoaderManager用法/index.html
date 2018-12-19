@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="一.基本概念 1.LoaderManager LoaderManager用来负责管理与Activity或者Fragment联系起来的一个或多个Loaders对象. 每个Activity或者Fragment都有唯一的一个LoaderManager实例(通过getLoaderManager()方法获得),用来启动,停止,保持,重启,关闭它的Loaders,这些功能可通过调用initLoader()/r">
+<meta name="keywords" content="LoaderManager">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LoaderManager用法">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/19/LoaderManager用法/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="一.基本概念 1.LoaderManager LoaderManager用来负责管理与Activity或者Fragment联系起来的一个或多个Loaders对象. 每个Activity或者Fragment都有唯一的一个LoaderManager实例(通过getLoaderManager()方法获得),用来启动,停止,保持,重启,关闭它的Loaders,这些功能可通过调用initLoader()/r">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-12-19T13:34:36.171Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LoaderManager用法">
+<meta name="twitter:description" content="一.基本概念 1.LoaderManager LoaderManager用来负责管理与Activity或者Fragment联系起来的一个或多个Loaders对象. 每个Activity或者Fragment都有唯一的一个LoaderManager实例(通过getLoaderManager()方法获得),用来启动,停止,保持,重启,关闭它的Loaders,这些功能可通过调用initLoader()/r">
+
+
+
+
+
+
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/19/LoaderManager用法/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>LoaderManager用法 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/19/LoaderManager用法/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">LoaderManager用法
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-19 13:36:48 / 修改时间：21:34:36" itemprop="dateCreated datePublished" datetime="2018-12-19T13:36:48+08:00">2018-12-19</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/ANDROID/" itemprop="url" rel="index"><span itemprop="name">ANDROID</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="一-基本概念"><a href="#一-基本概念" class="headerlink" title="一.基本概念"></a>一.基本概念</h4><p> <strong>1.LoaderManager</strong><br> LoaderManager用来负责管理与Activity或者Fragment联系起来的一个或多个Loaders对象.<br> 每个Activity或者Fragment都有唯一的一个LoaderManager实例(通过getLoaderManager()方法获得),用来启动,停止,保持,重启,关闭它的Loaders,这些功能可通过调用initLoader()/restartLoader()/destroyLoader()方法来实现.<br> LoaderManager并不知道数据如何装载以及何时需要装载.相反,它只需要控制它的Loaders们开始,停止,重置他们的Load行为,在配置变换或数据变化时保持loaders们的状态,并使用接口来返回load的结果.</p>
+<p> <strong>2.Loader</strong><br> Loades负责在一个单独线程中执行查询,监控数据源改变,当探测到改变时将查询到的结果集发送到注册的监听器上.Loader是一个强大的工具,具有如下特点<br> (1)它封装了实际的数据载入.<br> Activity或Fragment不再需要知道如何载入数据.它们将该任务委托给了Loader,Loader在后台执行查询要求并且将结果返回给Activity或Fragment.<br> (2)客户端不需要知道查询如何执行.Activity或Fragment不需要担心查询如何在独立的线程中执行,Loder会自动执行这些查询操作.<br> 这种方式不仅减少了代码复杂度同事也消除了线程相关bug的潜在可能.<br> (3)它是一种安全的事件驱动方式.<br> Loader检测底层数据,当检测到改变时,自动执行并载入最新数据.<br> 这使得使用Loader变得容易,客户端可以相信Loader将会自己自动更新它的数据.<br> Activity或Fragment所需要做的就是初始化Loader,并且对任何反馈回来的数据进行响应.除此之外,所有其他的事情都由Loader来解决.</p>
+<h4 id="二-异步Loader的实现原理"><a href="#二-异步Loader的实现原理" class="headerlink" title="二.异步Loader的实现原理"></a>二.异步Loader的实现原理</h4><p> (1)执行异步载入的任务.为了确保在一个独立线程中执行载入操作,Loader的子类必须继承AsyncTaskLoader<d>而不是Loader<d>类.<br> AsyncTaskLoader<d>是一个抽象Loader,它提供了一个AsyncTask来做它的执行操作.<br> 当定义子类时,通过实现抽象方法loadInBackground方法来实现异步task.该方法将在一个工作线程中执行数据加载操作.<br> (2)在一个注册监听器中接收载入完成返回的结果.<br> 对于每个Loader来说,LoaderManager注册一个OnLoadCompleteListener<d>,该对象将通过调用onLoadFinished(Loader<d> loader, D result)方法使Loader将结果传送给客户端.<br> Loader通过调用Loader#deliverResult(D result),将结果传递给已注册的监听器.</d></d></d></d></d></p>
+<h4 id="三-Loader三种不同状态"><a href="#三-Loader三种不同状态" class="headerlink" title="三.Loader三种不同状态."></a>三.Loader三种不同状态.</h4><p> 已启动: 处于已启动状态的Loader会执行载入操作,并在任何时间将结果传递到监听器中.已启动的Loader将会监听数据改变,当检测到改变时执行新的载入.<br> 一旦启动,Loader将一直处在已启动状态,一直到转换到已停止和重置,这是唯一一种onLoadFinished永远都会调用的状态。</p>
+<p> 已停止: 处于已停止状态的Loader将会继续监听数据改变,但是不会将结果返回给客户端.在已停止状态,Loader可能被启动或者重启.</p>
+<p> 重置: 当Loader处于重置状态时,将不会执行新的载入操作,也不会发送新的结果,也不会检测数据变化.<br> 当一个Loader进入重置状态,它必须解除对应的数据引用,方便垃圾回收(客户端也必须确定,在Loader无效之后,移除了所有对该数据的引用).<br> 通常,重置Loader不会两次调用.然而,在某些情况下他们可能会启动,所以如果必要的话,它们必须能够适时重置.</p>
+<h4 id="四-接收Loader数据改变的通知"><a href="#四-接收Loader数据改变的通知" class="headerlink" title="四.接收Loader数据改变的通知."></a>四.接收Loader数据改变的通知.</h4><p> 必须有一个观察者接受数据源改变的通知.<br> Loader必须实现这些Observer其中之一(ContentObserver，BroadcastReceiver等),来检测底层数据源的改变.<br> 当检测到数据改变,观察者必须调用Loader#onContentChanged().在该方法中执行两种不同操作:<br> (1)如果Loader已经处于启动状态，就会执行一个新的载入操作;<br> (2)设置一个flag标识数据源有改变，这样当Loader再次启动时，就知道应该重新载入数据了.</p>
+<h4 id="五-CursorLoader实现LoaderManager-LoaderCallbacks接口方法"><a href="#五-CursorLoader实现LoaderManager-LoaderCallbacks接口方法" class="headerlink" title="五.CursorLoader实现LoaderManager.LoaderCallbacks接口方法."></a>五.CursorLoader实现LoaderManager.LoaderCallbacks接口方法.</h4><p>接口声明及使用如下:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">LoaderCallbacks</span>&lt;<span class="title">D</span>&gt; </span>&#123; </span><br><span class="line"> <span class="function"><span class="keyword">public</span> Loader&lt;D&gt; <span class="title">onCreateLoader</span><span class="params">(<span class="keyword">int</span> id, Bundle args)</span></span>; </span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onLoadFinished</span><span class="params">(Loader&lt;D&gt; loader, D data)</span></span>; </span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onLoaderReset</span><span class="params">(Loader&lt;D&gt; loader)</span></span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p> onCreateLoader方法将在创建Loader时候调用，此时需要提供查询的配置,如监听一个URI.<br> 这个方法会在loader初始化的时调用，即调用下面的代码时调用：<br>  getLoaderManager().initLoader(id, bundle, loaderCallbacks);<br>  initLoader函数原型为:<br>  <d> Loader<d> android.app.LoaderManager.initLoader(int id, Bundle bundle, LoaderCallbacks<d> loaderCallbacks);<br>  第1个参数loader的ID,可自定义一个常量值,便于实现多个Loader;<br>  第2个参数一般置null;<br>  第3个参数是实现了LoaderManager.LoaderCallbacks实现类对象.<br>  onLoadFinished方法,在Loader完成任务后调用,一般在此读取结果.<br>  onLoaderReset方法是在配置发生变化时调用,一般调用下面的代码后调用:<br>  getLoaderManager().restartLoader(id, bundle, loaderCallbacks);<br>  restartLoader方法参数同initLoader,重新初始化loader之后,需要用来释放对前面loader查询到的结果引用.</d></d></d></p>
+<h4 id="六-使用场景"><a href="#六-使用场景" class="headerlink" title="六.使用场景"></a>六.使用场景</h4><p>  在之前呢，我们经常会有这种需求，比如在某个activity，或者某个fragment里面，我们需要查找某个数据源，并且显示出来，当数据源自己更新的时候，界面也要及时响应。</p>
+<p>  当然咯，查找数据这个过程可能很短，但是也可能很漫长，为了避免anr，我们都是开启一个子线程去查找，然后通过handler来更新我们的ui界面。但是，考虑到activity和fragment 复杂的生命周期，上述的方法 使用起来会很不方便，毕竟你要考虑到保存现场 还原现场 等等复杂的工作来保证你的app无懈可击。所以后来呢谷歌就帮我们推出了一个</p>
+<p>  新的东西—Loader。他可以帮我们完成上述所有功能！实在是很强大。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/LoaderManager/" rel="tag"># LoaderManager</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/19/activity被销毁而没有调用onDestory的情况/" rel="next" title="activity被销毁而没有调用onDestory的情况">
+                <i class="fa fa-chevron-left"></i> activity被销毁而没有调用onDestory的情况
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/19/android-presentation双屏异显/" rel="prev" title="android presentation双屏异显">
+                android presentation双屏异显 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">69</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">41</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#一-基本概念"><span class="nav-number">1.</span> <span class="nav-text">一.基本概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#二-异步Loader的实现原理"><span class="nav-number">2.</span> <span class="nav-text">二.异步Loader的实现原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#三-Loader三种不同状态"><span class="nav-number">3.</span> <span class="nav-text">三.Loader三种不同状态.</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#四-接收Loader数据改变的通知"><span class="nav-number">4.</span> <span class="nav-text">四.接收Loader数据改变的通知.</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#五-CursorLoader实现LoaderManager-LoaderCallbacks接口方法"><span class="nav-number">5.</span> <span class="nav-text">五.CursorLoader实现LoaderManager.LoaderCallbacks接口方法.</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#六-使用场景"><span class="nav-number">6.</span> <span class="nav-text">六.使用场景</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
