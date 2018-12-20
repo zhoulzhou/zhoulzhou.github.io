@@ -4,7 +4,7 @@ date: 2018-12-20 17:13:26
 tags:
 - 转屏
 categories:
-- ANDROID
+- Android系统源码
 ---
 转屏的代码逻辑主要在ＷＭＳ（窗口管理）这一块。
 
