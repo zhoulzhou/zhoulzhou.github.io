@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="转屏的代码逻辑主要在ＷＭＳ（窗口管理）这一块。 整个转屏过程可以分为以下几个步骤： １计算出屏幕的下一个rotation; ２window 重新布局计算 一开始当然是Sensor 从驱动传上来值，然后上层来判断要不要转屏，　这部分代码位WindowOrientationListener，　WindowOrientationListener是一个抽象类。在他的内部有一个SensorEventList">
+<meta name="keywords" content="转屏">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 转屏分析">
+<meta property="og:url" content="https://weiteluwei.com/2018/12/20/Android-转屏分析/index.html">
+<meta property="og:site_name" content="KEEM--BLOG">
+<meta property="og:description" content="转屏的代码逻辑主要在ＷＭＳ（窗口管理）这一块。 整个转屏过程可以分为以下几个步骤： １计算出屏幕的下一个rotation; ２window 重新布局计算 一开始当然是Sensor 从驱动传上来值，然后上层来判断要不要转屏，　这部分代码位WindowOrientationListener，　WindowOrientationListener是一个抽象类。在他的内部有一个SensorEventList">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-12-20T11:10:10.108Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 转屏分析">
+<meta name="twitter:description" content="转屏的代码逻辑主要在ＷＭＳ（窗口管理）这一块。 整个转屏过程可以分为以下几个步骤： １计算出屏幕的下一个rotation; ２window 重新布局计算 一开始当然是Sensor 从驱动传上来值，然后上层来判断要不要转屏，　这部分代码位WindowOrientationListener，　WindowOrientationListener是一个抽象类。在他的内部有一个SensorEventList">
+
+
+
+
+
+
+  <link rel="canonical" href="https://weiteluwei.com/2018/12/20/Android-转屏分析/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Android 转屏分析 | KEEM--BLOG</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">KEEM--BLOG</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://weiteluwei.com/2018/12/20/Android-转屏分析/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Keem Wang">
+      <meta itemprop="description" content="Stay hungry Stay foolish">
+      <meta itemprop="image" content="/images/avatarx.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="KEEM--BLOG">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android 转屏分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-20 17:13:26 / 修改时间：19:10:10" itemprop="dateCreated datePublished" datetime="2018-12-20T17:13:26+08:00">2018-12-20</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Android系统源码/" itemprop="url" rel="index"><span itemprop="name">Android系统源码</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>转屏的代码逻辑主要在ＷＭＳ（窗口管理）这一块。</p>
+<p>整个转屏过程可以分为以下几个步骤：</p>
+<p>１计算出屏幕的下一个rotation;</p>
+<p>２window 重新布局计算</p>
+<p>一开始当然是Sensor 从驱动传上来值，然后上层来判断要不要转屏，　这部分代码位WindowOrientationListener，　WindowOrientationListener是一个抽象类。在他的内部有一个SensorEventListenerImpl　实现了SensorEventListener　用于监听Sensor</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">WindowOrientationListener</span><span class="params">(Context context, Handler <span class="keyword">handler</span>, <span class="keyword">int</span> rate)</span> </span>&#123;  </span><br><span class="line">      mHandler = <span class="keyword">handler</span>;  </span><br><span class="line">      mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);  </span><br><span class="line">      mRate = rate;  </span><br><span class="line">      mSensor = mSensorManager.getDefaultSensor(USE_GRAVITY_SENSOR  </span><br><span class="line">              ? Sensor.TYPE_GRAVITY : Sensor.TYPE_ACCELEROMETER);  </span><br><span class="line">      <span class="keyword">if</span> (mSensor != <span class="keyword">null</span>) &#123;  </span><br><span class="line">          <span class="comment">// Create listener only if sensors do exist  </span></span><br><span class="line">          mSensorEventListener = <span class="keyword">new</span> SensorEventListenerImpl();  </span><br><span class="line">      &#125;  </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>其中USE_GRAVITY_SENSOR　等于false ，也就是说目前我们手机里转屏用的Sensor 是加速度传感器，并非重力感应器<br>mSensorEventListener　的 registerListener 和　unregisterListener　分别位于WindowOrientationListener的enable()  和　disable ()方法中。</p>
+<figure class="highlight lsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"> <span class="number">1.</span> public void enable() &#123;  </span><br><span class="line"> <span class="number">2.</span>            synchronized (mLock) &#123;  </span><br><span class="line"> <span class="number">3.</span>            if (mSensor == null) &#123;  </span><br><span class="line"> <span class="number">4.</span>                Log.w(TAG, <span class="string">"Cannot detect sensors. Not enabled"</span>);  </span><br><span class="line"> <span class="number">5.</span>                return;  </span><br><span class="line"> <span class="number">6.</span>            &#125;  </span><br><span class="line"> <span class="number">7.</span>            if (mEnabled == false) &#123;  </span><br><span class="line"> <span class="number">8.</span>                if (LOG) &#123;  </span><br><span class="line"> <span class="number">9.</span>                    Log.d(TAG, <span class="string">"WindowOrientationListener enabled"</span>);  </span><br><span class="line"><span class="number">10.</span>                &#125;  </span><br><span class="line"><span class="number">11.</span>                mSensorEventListener.resetLocked();  </span><br><span class="line"><span class="number">12.</span>                mSensorManager.registerListener(mSensorEventListener, mSensor, mRate, mHandler);  </span><br><span class="line"><span class="number">13.</span>                mEnabled = true;  </span><br><span class="line"><span class="number">14.</span>            &#125;  </span><br><span class="line"><span class="number">15.</span>        &#125;  </span><br><span class="line"><span class="number">16.</span>    &#125;  </span><br><span class="line"><span class="number">17.</span>   </span><br><span class="line"><span class="number">18.</span>    <span class="comment">/** </span></span><br><span class="line"><span class="comment">19.     * Disables the WindowOrientationListener. </span></span><br><span class="line"><span class="comment">20.     */</span>  </span><br><span class="line"><span class="number">21.</span>    public void disable() &#123;  </span><br><span class="line"><span class="number">22.</span>   </span><br><span class="line"><span class="number">23.</span>        synchronized (mLock) &#123;  </span><br><span class="line"><span class="number">24.</span>            if (mSensor == null) &#123;  </span><br><span class="line"><span class="number">25.</span>                Log.w(TAG, <span class="string">"Cannot detect sensors. Invalid disable"</span>);  </span><br><span class="line"><span class="number">26.</span>                return;  </span><br><span class="line"><span class="number">27.</span>            &#125;  </span><br><span class="line"><span class="number">28.</span>            if (mEnabled == true) &#123;  </span><br><span class="line"><span class="number">29.</span>                if (LOG) &#123;  </span><br><span class="line"><span class="number">30.</span>                    Log.d(TAG, <span class="string">"WindowOrientationListener disabled"</span>);  </span><br><span class="line"><span class="number">31.</span>                &#125;  </span><br><span class="line"><span class="number">32.</span>                mSensorManager.unregisterListener(mSensorEventListener);  </span><br><span class="line"><span class="number">33.</span>                mEnabled = false;  </span><br><span class="line"><span class="number">34.</span>            &#125;  </span><br><span class="line"><span class="number">35.</span>        &#125;  </span><br><span class="line"><span class="number">36.</span>    &#125;</span><br></pre></td></tr></table></figure>
+<p>WindowOrientationListener 的enable() 和disbale() 的调用位于PhoneWindowManager的updateOrientationListenerLp　方法中。该方法会在screen on, screen off 和Settings数据库发生变化的时候调用。<br>　　下面我们回到SensorEventListenerImpl，我们知道当sensor 值发生变化时会调用onSensorChanged。在这里经过一些算法比较后。确定是不是要转屏。这部分代码我就没仔细看了，有兴趣可以自己研究。总之，再判断要转屏之后。会调用WindowOrientationListener的onProposedRotationChanged方法。</p>
+<p>这个方法是一个抽象的方法。他的实现位于MyOrientationListener中，　MyOrientationListener是PhoneWindowManager 里面的内部类。onProposedRotationChanged就是简单调用updateRotation，　然后调用WindowManagerService的updateRotation方法，　再到updateRotationUnchecked方法</p>
+<p>我们来看updateRotationUnchecked方法</p>
+<figure class="highlight lsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"> <span class="number">1.</span> public void updateRotationUnchecked(boolean alwaysSendConfiguration, boolean forceRelayout) &#123;  </span><br><span class="line"> <span class="number">2.</span>         if(DEBUG_ORIENTATION) Slog.v(TAG, <span class="string">"updateRotationUnchecked("</span>  </span><br><span class="line"> <span class="number">3.</span>                    + <span class="string">"alwaysSendConfiguration="</span> + alwaysSendConfiguration + <span class="string">")"</span>);  </span><br><span class="line"> <span class="number">4.</span>   </span><br><span class="line"> <span class="number">5.</span>         long origId = Binder.clearCallingIdentity();  </span><br><span class="line"> <span class="number">6.</span>         boolean <span class="section">changed</span>;  </span><br><span class="line"> <span class="number">7.</span>         synchronized(mWindowMap) &#123;  </span><br><span class="line"> <span class="number">8.</span>             <span class="section">changed</span> = updateRotationUncheckedLocked(false);  </span><br><span class="line"> <span class="number">9.</span>             if (!<span class="section">changed</span> || forceRelayout) &#123;  </span><br><span class="line"><span class="number">10.</span>                 getDefaultDisplayContentLocked().layoutNeeded = true;  </span><br><span class="line"><span class="number">11.</span>                 performLayoutAndPlaceSurfacesLocked();  </span><br><span class="line"><span class="number">12.</span>             &#125;  </span><br><span class="line"><span class="number">13.</span>         &#125;  </span><br><span class="line"><span class="number">14.</span>   </span><br><span class="line"><span class="number">15.</span>         if (<span class="section">changed</span> || alwaysSendConfiguration) &#123;  </span><br><span class="line"><span class="number">16.</span>             sendNewConfiguration();  </span><br><span class="line"><span class="number">17.</span>         &#125;  </span><br><span class="line"><span class="number">18.</span>   </span><br><span class="line"><span class="number">19.</span>         Binder.restoreCallingIdentity(origId);  </span><br><span class="line"><span class="number">20.</span>     &#125;</span><br></pre></td></tr></table></figure>
+<p> 我们可以看到updateRotationUnchecked主要做了３件事：</p>
+<p>　　　１。更新rotation </p>
+<p>　　　 2。通知到ＡＭＳ　Configuration　changed</p>
+<pre><code>首先，我们来分析updateRotationUncheckedLocked，　
+</code></pre><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">int rotation</span> = mPolicy.rotationForOrientationLw(mForcedAppOrientation, mRotation);</span><br></pre></td></tr></table></figure>
+<p> updateRotationUncheckedLocked第一个很重要的方法，就是mPolicy.rotationForOrientationLw(mForcedAppOrientation, mRotation);　 mForcedAppOrientation一般情况是由当前Resume状态的Activity决定的。具体实现是在PhoneWindowManager 中，作用就是根据mForcedAppOrientation和 rotation计算出新的rotation</p>
+ <figure class="highlight nix"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"> <span class="attr">mRotation</span> = rotation;</span><br><span class="line"><span class="attr">mAltOrientation</span> = altOrientation;</span><br><span class="line">mPolicy.setRotationLw(mRotation);</span><br><span class="line"> </span><br><span class="line"><span class="attr">mWindowsFreezingScreen</span> = <span class="literal">true</span>;</span><br><span class="line">mH.removeMessages(H.WINDOW_FREEZE_TIMEOUT);</span><br><span class="line">mH.sendEmptyMessageDelayed(H.WINDOW_FREEZE_TIMEOUT, WINDOW_FREEZE_TIMEOUT_DURATION);</span><br><span class="line"><span class="attr">mWaitingForConfig</span> = <span class="literal">true</span>;</span><br><span class="line">final DisplayContent <span class="attr">displayContent</span> = getDefaultDisplayContentLocked();</span><br><span class="line">displayContent.<span class="attr">layoutNeeded</span> = <span class="literal">true</span>;</span><br><span class="line">final int[] <span class="attr">anim</span> = new int[<span class="number">2</span>];</span><br><span class="line"><span class="keyword">if</span> (displayContent.isDimming()) &#123;</span><br><span class="line">    anim[<span class="number">0</span>] = anim[<span class="number">1</span>] = <span class="number">0</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    mPolicy.selectRotationAnimationLw(anim);</span><br><span class="line">&#125;</span><br><span class="line">startFreezingDisplayLocked(inTransaction, anim[<span class="number">0</span>], anim[<span class="number">1</span>]);</span><br><span class="line">// startFreezingDisplayLocked can reset the ScreenRotationAnimation.</span><br><span class="line"><span class="attr">screenRotationAnimation</span> =</span><br><span class="line">        mAnimator.getScreenRotationAnimationLocked(Display.DEFAULT_DISPLAY);</span><br></pre></td></tr></table></figure>
+<p> 上面的代码主要就是设置rotation，  开始freezing screen 。  设置 freezing_time_out ， 获取转屏动画等操作。<br> 我们再往下看：</p>
+ <figure class="highlight nix"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> final WindowList <span class="attr">windows</span> = displayContent.getWindowList();</span><br><span class="line">for (int <span class="attr">i</span> = windows.size() - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">    WindowState <span class="attr">w</span> = windows.get(i);</span><br><span class="line">    <span class="keyword">if</span> (w.mHasSurface) &#123;</span><br><span class="line">        <span class="keyword">if</span> (DEBUG_ORIENTATION) Slog.v(TAG, <span class="string">"Set mOrientationChanging of "</span> + w);</span><br><span class="line">        w.<span class="attr">mOrientationChanging</span> = <span class="literal">true</span>;</span><br><span class="line">        mInnerFields.<span class="attr">mOrientationChangeComplete</span> = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    w.<span class="attr">mLastFreezeDuration</span> = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>这里设置了两个重要的属性：
+</code></pre><figure class="highlight nix"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">w.<span class="attr">mOrientationChanging</span> = <span class="literal">true</span>;</span><br><span class="line">mInnerFields.<span class="attr">mOrientationChangeComplete</span> = <span class="literal">false</span>;</span><br></pre></td></tr></table></figure>
+<p>注意这两个属性和转屏结束有关。</p>
+<p>接着  如果changed true 表示，rotation 要发生变化。  则调用sendNewConfiguration  。其作用就是调用AMS 的  mActivityManager.updateConfiguration(null);</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">void</span> <span class="title">sendNewConfiguration</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        mActivityManager.updateConfiguration(<span class="keyword">null</span>);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RemoteException e) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>AMS 的 updateConfiguration 方法 首先会调用 ＷＭＳ的　computeNewConfiguration　来计算出新的config.  其最终实现是在WMS的computeScreenConfigurationLocked中。 有兴趣可以具体分析。</p>
+<p>接着ＡＭＳ会根据得到的新的config 调用　updateConfigurationLocked(values, null, false, false);       这个方法是系统更新config 的方法。任何config　changed都会调用到。做过theme 的应该都了解。　updateConfigurationLocked其主要作用就是更新Ａｐｐ的configuration  发送CONFIGURATION_CHANGED 广播 。在这个方法最后会调用到ＷＭＳ　</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> 　　<span class="string">if</span> <span class="string">(values</span> <span class="string">!=</span> <span class="literal">null</span> <span class="string">&amp;&amp;</span> <span class="string">mWindowManager</span> <span class="string">!=</span> <span class="literal">null</span><span class="string">)</span> <span class="string">&#123;</span></span><br><span class="line">       <span class="string">mWindowManager.setNewConfiguration(mConfiguration);</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">setNewConfiguration</span><span class="params">(Configuration config)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!checkCallingPermission(android.Manifest.permission.MANAGE_APP_TOKENS,</span><br><span class="line">            <span class="string">"setNewConfiguration()"</span>)) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> SecurityException(<span class="string">"Requires MANAGE_APP_TOKENS permission"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">synchronized</span>(mWindowMap) &#123;</span><br><span class="line">    	mCurConfiguration = <span class="keyword">new</span> Configuration(config);</span><br><span class="line">        <span class="keyword">if</span> (mWaitingForConfig) &#123;</span><br><span class="line">            mWaitingForConfig = <span class="keyword">false</span>;</span><br><span class="line">            mLastFinishedFreezeSource = <span class="string">"new-config"</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        performLayoutAndPlaceSurfacesLocked();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>会更新ＷＭＳ　这边mCurConfiguration。　然后调用　performLayoutAndPlaceSurfacesLocked　对窗口重新布局绘制</p>
+<p>在performLayoutAndPlaceSurfacesLocked 执行过程中会对每个可见的window 调用updateResizingWindows(w); 我们来看updateResizingWindows</p>
+<figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> updateResizingWindows(<span class="keyword">final</span> WindowState w) &#123;</span><br><span class="line">       <span class="keyword">final</span> WindowStateAnimator winAnimator = w.mWinAnimator;</span><br><span class="line">       <span class="keyword">if</span> (w.mHasSurface &amp;&amp; w.mLayoutSeq == mLayoutSeq) &#123;</span><br><span class="line">           w.setInsetsChanged();</span><br><span class="line">           <span class="built_in">boolean</span> configChanged = w.isConfigChanged();</span><br><span class="line">           w.mLastFrame.<span class="built_in">set</span>(w.mFrame);</span><br><span class="line">           <span class="keyword">if</span> (w.mContentInsetsChanged</span><br><span class="line">                   || w.mVisibleInsetsChanged</span><br><span class="line">                   || winAnimator.mSurfaceResized</span><br><span class="line">                   || configChanged) &#123;</span><br><span class="line">                          </span><br><span class="line">               w.mLastOverscanInsets.<span class="built_in">set</span>(w.mOverscanInsets);</span><br><span class="line">               w.mLastContentInsets.<span class="built_in">set</span>(w.mContentInsets);</span><br><span class="line">               w.mLastVisibleInsets.<span class="built_in">set</span>(w.mVisibleInsets);</span><br><span class="line">               makeWindowFreezingScreenIfNeededLocked(w);</span><br><span class="line">               <span class="comment">// If the orientation is changing, then we need to</span></span><br><span class="line">               <span class="comment">// hold off on unfreezing the display until this</span></span><br><span class="line">               <span class="comment">// window has been redrawn; to do that, we need</span></span><br><span class="line">               <span class="comment">// to go through the process of getting informed</span></span><br><span class="line">               <span class="comment">// by the application when it has finished drawing.</span></span><br><span class="line">               <span class="keyword">if</span> (w.mOrientationChanging) &#123;</span><br><span class="line">                   <span class="keyword">if</span> (DEBUG_SURFACE_TRACE || DEBUG_ANIM || DEBUG_ORIENTATION) Slog.v(TAG,</span><br><span class="line">                           <span class="string">"Orientation start waiting for draw mDrawState=DRAW_PENDING in "</span></span><br><span class="line">                           + w + <span class="string">", surface "</span> + winAnimator.mSurfaceControl);</span><br><span class="line">                   winAnimator.mDrawState = WindowStateAnimator.DRAW_PENDING;</span><br><span class="line">                   <span class="keyword">if</span> (w.mAppToken != <span class="keyword">null</span>) &#123;</span><br><span class="line">                       w.mAppToken.allDrawn = <span class="keyword">false</span>;</span><br><span class="line">                       w.mAppToken.deferClearAllDrawn = <span class="keyword">false</span>;</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;</span><br><span class="line">               <span class="keyword">if</span> (!mResizingWindows.contains(w)) &#123;</span><br><span class="line">                   <span class="keyword">if</span> (DEBUG_RESIZE || DEBUG_ORIENTATION) Slog.v(TAG,</span><br><span class="line">                           <span class="string">"Resizing window "</span> + w + <span class="string">" to "</span> + winAnimator.mSurfaceW</span><br><span class="line">                           + <span class="string">"x"</span> + winAnimator.mSurfaceH);</span><br><span class="line">                   mResizingWindows.<span class="built_in">add</span>(w);</span><br><span class="line">               &#125;</span><br><span class="line">           &#125; <span class="keyword">else</span> <span class="keyword">if</span> (w.mOrientationChanging) &#123;</span><br><span class="line">               <span class="keyword">if</span> (w.isDrawnLw()) &#123;</span><br><span class="line">                   <span class="keyword">if</span> (DEBUG_ORIENTATION) Slog.v(TAG,</span><br><span class="line">                           <span class="string">"Orientation not waiting for draw in "</span></span><br><span class="line">                           + w + <span class="string">", surface "</span> + winAnimator.mSurfaceControl);</span><br><span class="line">                   w.mOrientationChanging = <span class="keyword">false</span>;</span><br><span class="line">                   w.mLastFreezeDuration = (<span class="built_in">int</span>)(SystemClock.elapsedRealtime()</span><br><span class="line">                           - mDisplayFreezeTime);</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>由于WMS的 mConfiguration 已经改变了。而windowstate.isConfigChaned 会返回true</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">isConfigChanged</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">boolean</span> configChanged = mConfiguration != mService.mCurConfiguration</span><br><span class="line">            &amp;&amp; (mConfiguration == <span class="keyword">null</span></span><br><span class="line">                    || (mConfiguration.diff(mService.mCurConfiguration) != <span class="number">0</span>));</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (mAttrs.type == TYPE_KEYGUARD) &#123;</span><br><span class="line">        <span class="comment">// Retain configuration changed status until resetConfiguration called.</span></span><br><span class="line">        mConfigHasChanged |= configChanged;</span><br><span class="line">        configChanged = mConfigHasChanged;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> configChanged;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  可以看到当转屏时 configChanged 发生了变化。 需要对window 重新布局和绘制。并且会加入   mResizingWindows.add(w);</p>
+<figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (<span class="name">w</span>.mContentInsetsChanged</span><br><span class="line">                  || w.mVisibleInsetsChanged</span><br><span class="line">                  || winAnimator.mSurfaceResized</span><br><span class="line">                  || configChanged)</span><br></pre></td></tr></table></figure>
+<p>如果都没有发生，且 w.mOrientationChanging 为true 且 w.isDrawnLw() ，已经绘制完成，则会将w.mOrientationChanging 设为false</p>
+<p>performLayoutAndPlaceSurfacesLocked 接下来会对 mResizingWindows 里面的所有窗口调用 resize 处理。 最终会调用到应用端，让应用重新布局绘制。</p>
+<p>performLayoutAndPlaceSurfacesLocked 的最后会调用scheduleAnimationLocked 来播放动画  动画的循环执行是在WindowAnimator animateLocked 方法中。 这个方法在每次开始的时候。都会将</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">mBulkUpdateParams</span> = SET_ORIENTATION_CHANGE_COMPLETE<span class="comment">;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">      <span class="keyword">final</span> WindowList windows = mService.getWindowListLocked(displayId);</span><br><span class="line">          <span class="keyword">final</span> <span class="built_in">int</span> N = windows.<span class="built_in">size</span>();</span><br><span class="line">          <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; N; j++) &#123;</span><br><span class="line">              windows.<span class="built_in">get</span>(j).mWinAnimator.prepareSurfaceLocked(<span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/转屏/" rel="tag"># 转屏</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/19/android-presentation双屏异显/" rel="next" title="android presentation双屏异显">
+                <i class="fa fa-chevron-left"></i> android presentation双屏异显
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatarx.jpg" alt="Keem Wang">
+            
+              <p class="site-author-name" itemprop="name">Keem Wang</p>
+              <p class="site-description motion-element" itemprop="description">Stay hungry Stay foolish</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">70</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">42</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Keem Wang</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.5.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
