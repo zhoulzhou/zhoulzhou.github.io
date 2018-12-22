@@ -116,7 +116,7 @@
 <meta property="og:site_name" content="KEEM--BLOG">
 <meta property="og:description" content="一个Android.mk文件可以编译多个模块，每个模块属下列类型之一：  1）APK程序  一般的Android程序，编译打包生成apk文件  2）JAVA库  java类库，编译打包生成jar文件  3)C\C++应用程序 可执行的C\C++应用程序  4）C\C++静态库编译生成C\C++静态库，并打包成.a文件  5）C\C++共享库编译生成共享库（动态链接库），并打包成.so文， 有且只有">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-12-09T12:07:38.848Z">
+<meta property="og:updated_time" content="2018-12-22T01:01:59.391Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android .mk语法详解">
 <meta name="twitter:description" content="一个Android.mk文件可以编译多个模块，每个模块属下列类型之一：  1）APK程序  一般的Android程序，编译打包生成apk文件  2）JAVA库  java类库，编译打包生成jar文件  3)C\C++应用程序 可执行的C\C++应用程序  4）C\C++静态库编译生成C\C++静态库，并打包成.a文件  5）C\C++共享库编译生成共享库（动态链接库），并打包成.so文， 有且只有">
@@ -411,7 +411,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-12-09 20:07:38" itemprop="dateModified" datetime="2018-12-09T20:07:38+08:00">2018-12-09</time>
+                <time title="修改时间：2018-12-22 09:01:59" itemprop="dateModified" datetime="2018-12-22T09:01:59+08:00">2018-12-22</time>
               
             
           </span>
@@ -505,6 +505,11 @@
 </blockquote>
 <p>加载当前目录下的所有makefile文件，all-makefiles-under会返回一个位于当前’my-dir’路径的子目录中的所有Android.mk的列表。all-makefiles-under宏的定义是在build/core/definitions.mk中。</p>
 <p>编译此Android.mk文件最后就生成了Settings.apk。</p>
+<p>LOCAL_MODULE 指定 拷贝后的apk的名字(全名)，这个变量里可以有路径，但路径也会被拷贝,创建，如果 是在编译整个android的源码，这个apk必须已经添加到了PRODUCT_PACKAGES 变量里，否则 不会拷贝到,相应的位置，</p>
+<p>LOCAL_CERTIFICATE := PRESIGNED 表示 这个apk已经签过名了，系统不需要再次 签名；</p>
+<p>LOCAL_MODULE_CLASS 指定文件类型，apk文件用APPS, 并且 会检查 是否是apk文件，动态库so文件用SHARED_LIBRARIES ，bin文件用EXECUTABLES，其他文件 用ETC</p>
+<p>注意：若是被预置的apk里有so库，需要将从Test.apk的 so库拷贝到 out/target/product/xxx/system/lib/目录下，若无 so 库，则去掉此步；</p>
+<p>方法一 只能针对 一个文件，方法二 可以 针对多个文件，但 只能 把 文件 拷贝到 system/lib/ 下，<br>Android提供了Prebuilt编译方法，两个文件prebuilt.mk和multi_prebuilt.mk，对应的方法宏是BUILD_PREBUILT和 BUILD_MULTI_PREBUILT。<br>prebuilt.mk就是prebuilt的具体实现，它是针对独立一个文件的操作，multi_prebuilt.mk 可以针对多个文件的，它对多个文件进行判断，然后调用prebuilt对独立一个文件进行处理。</p>
 
       
     </div>
