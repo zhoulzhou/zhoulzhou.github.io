@@ -92,3 +92,18 @@ include $(BUILD_STATIC_JAVA_LIBRARY)    表示编译生成JAVA库（打包成.ja
 编译此Android.mk文件最后就生成了Settings.apk。
 
 
+
+LOCAL_MODULE 指定 拷贝后的apk的名字(全名)，这个变量里可以有路径，但路径也会被拷贝,创建，如果 是在编译整个android的源码，这个apk必须已经添加到了PRODUCT_PACKAGES 变量里，否则 不会拷贝到,相应的位置，
+
+LOCAL_CERTIFICATE := PRESIGNED 表示 这个apk已经签过名了，系统不需要再次 签名；
+
+LOCAL_MODULE_CLASS 指定文件类型，apk文件用APPS, 并且 会检查 是否是apk文件，动态库so文件用SHARED_LIBRARIES ，bin文件用EXECUTABLES，其他文件 用ETC
+
+注意：若是被预置的apk里有so库，需要将从Test.apk的 so库拷贝到 out/target/product/xxx/system/lib/目录下，若无 so 库，则去掉此步；
+
+方法一 只能针对 一个文件，方法二 可以 针对多个文件，但 只能 把 文件 拷贝到 system/lib/ 下，
+Android提供了Prebuilt编译方法，两个文件prebuilt.mk和multi_prebuilt.mk，对应的方法宏是BUILD_PREBUILT和 BUILD_MULTI_PREBUILT。
+prebuilt.mk就是prebuilt的具体实现，它是针对独立一个文件的操作，multi_prebuilt.mk 可以针对多个文件的，它对多个文件进行判断，然后调用prebuilt对独立一个文件进行处理。
+
+
+
