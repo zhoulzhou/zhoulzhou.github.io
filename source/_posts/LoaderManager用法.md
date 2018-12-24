@@ -4,7 +4,7 @@ date: 2018-12-19 13:36:48
 tags:
 - LoaderManager
 categories:
-- ANDROID
+- 多线程
 ---
 #### 一.基本概念
  **1.LoaderManager**

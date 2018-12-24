@@ -5,7 +5,7 @@ tags:
 - presentation
 - 双屏异显
 categories:
-- ANDROID
+- Android系统源码
 ---
 要为辅助显示屏创建独特的内容:
 

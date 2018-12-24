@@ -4,7 +4,7 @@ date: 2018-12-11 16:18:18
 tags:
 - Context
 categories:
-- ANDROID
+- Android系统源码
 ---
 #### 引言
 Context对于Android开发人员来说并不陌生，项目中我们会经常使用Context来获取APP资源，创建UI，获取系统Service服务，启动Activity，绑定Service，发送广播，获取APP信息等等。那么Context到底是什么？Context又是怎么来实现以上功能的？在什么场景下使用不同的Context？一个APP中总共有多少个Context？这篇博客将从源码角度带你分析Android Context到底是个啥。
