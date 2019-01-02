@@ -1,0 +1,100 @@
+---
+title: Android中UID机制和共享进程
+date: 2018-12-28 10:54:03
+tags:
+- UID机制
+categories:
+- ANDROID
+---
+我们经常在一个activity中去start另一个activity，或者与另一个acitivity的结果进行交互（startActivityForResult）。但有没有想过可能会出现的permission问题呢？如果你遇到了permission denial的Exception，那么你需要读读这篇文章啦。
+
+我们在同一个application内部，可以随意的startActivity from Activity A to Activity B，而官方的文档中说startActivity可能会报NotFoundException，表示被start的Activity不存在。因此，我们很容易忽略另一个可能的Exception，Permission Denial。
+
+当我们在不同的application中，如application A中的Activity去start一个application B中的Activity，也许你什么Exception都不会得到，也可能会直接Force Close掉。因为再Start Activity时，代码是有去检验permission的。
+
+如下情况，可以成功startActivity而不会得到permission denial
+
+1、同一个application下
+
+2、Uid相同
+
+3、permission匹配
+
+4、目标Activity的属性Android:exported=”true”
+
+5、目标Activity具有相应的IntentFilter，存在Action动作或其他过滤器并且没有设置exported=false
+
+6、启动者的Pid是一个System Server的Pid
+
+7、启动者的Uid是一个System Uid（Android规定android.system.uid=1000，具有该Uid的application，我们称之为获得Root权限）
+
+如果上述调节，满足一条，一般即可（与其他几条不发生强制设置冲突），否则，将会得到Permission Denial的Exception而导致Force Close。
+
+**需要做一个application，将某些服务service，provider或者activity等的数据，共享出来怎么办，三个办法。**
+
+1、完全暴露，这就是android:exported=”true”的作用，而一旦设置了intentFilter之后，exported就默认被设置为true了，除非再强制设为false。当然，对那些没有intentFilter的程序体，它的exported属性默认仍然是false，也就不能共享出去。
+
+2、权限提示暴露，这就是为什么经常要设置usePermission的原因，如果人家设置了android:permission=”xxx.xxx.xx”那么，你就必须在你的application的Manufest中usepermission xxx.xxx.xx才能访问人家的东西。
+
+3、私有暴露，假如说一个公司做了两个产品，只想这两个产品之间可互相调用，那么这个时候就必须使用shareUserID将两个软件的Uid强制设置为一样的。这种情况下必须使用具有该公司签名的签名文档才能，如果使用一个系统自带软件的ShareUID，例如Contact，那么无须第三方签名。
+
+这种方式保护了第三方软件公司的利益于数据安全。
+
+当然如果一个activity是又system process跑出来的，那么它就可以横行霸道，任意权限，只是你无法开发一个第三方application具有系统的Pid（系统Pid不固定），但是你完全可以开发一个具有系统Uid的程序，对系统中的所有程序任意访问，只需再Manufest中声明shareUserId为android.system.uid即可，生成的文件也必须经过高权限签名才行，一般不具备这种审核条件的application，google不会提供给你这样的签名文件。当然你是在编译自己的系统的话，想把它作成系统软件程序，只需在Android.mk中声明Certificate:platform则可以了，既采用系统签名。这个系统Uid的获得过程，我们把它叫做获得Root权限的过程。所以很多第三方系统管理软件就是有Root权限的软件，因为他需要对系统有任意访问的权限。那么它的Root签名则需要和编译的系统一致，例如官方的系统得用官方的签名文件，CM的系统就得用CM的签名文件。（这里就不多讲了）
+
+讲到这里，大家应该明白Uid机制了吧。^_
+
+
+
+安装在设备中的每一个Android包文件（.apk）都会被分配到一个属于自己的统一的Linux用户ID，并且为它创建一个沙箱，以防止影响其他应用程序（或者其他应用程序影响它）。用户ID 在应用程序安装到设备中时被分配，并且在这个设备中保持它的永久性。
+
+通过Shared User id,拥有同一个User id的多个APK可以配置成运行在同一个进程中.所以默认就是可以互相访问任意数据. 也可以配置成运行成不同的进程, 同时可以访问其他APK的数据目录下的数据库和文件.就像访问本程序的数据一样.
+
+**对于一个APK来说，如果要使用某个共享UID的话，必须做三步：**
+
+1、在Manifest节点中增加android:sharedUserId属性。
+
+2、在Android.mk中增加LOCAL_CERTIFICATE的定义。
+
+如果增加了上面的属性但没有定义与之对应的LOCAL_CERTIFICATE的话，APK是安装不上去的。提示错误是：Package com.test.MyTest has no signatures that match those in shared user android.uid.system; ignoring!也就是说，仅有相同签名和相同sharedUserID标签的两个应用程序签名都会被分配相同的用户ID。例如所有和media/download相关的APK都使用android.media作为sharedUserId的话，那么它们必须有相同的签名media。
+
+3、把APK的源码放到packages/apps/目录下，用mm进行编译。
+
+举例说明一下。
+
+系统中所有使用android.uid.system作为共享UID的APK，都会首先在manifest节点中增加android:sharedUserId="android.uid.system"，然后在Android.mk中增加LOCAL_CERTIFICATE := platform。可以参见Settings等
+
+系统中所有使用android.uid.shared作为共享UID的APK，都会在manifest节点中增加android:sharedUserId="android.uid.shared"，然后在Android.mk中增加LOCAL_CERTIFICATE := shared。可以参见Launcher等
+
+系统中所有使用android.media作为共享UID的APK，都会在manifest节点中增加android:sharedUserId="android.media"，然后在Android.mk中增加LOCAL_CERTIFICATE := media。可以参见Gallery等。
+
+
+
+另外，应用创建的任何文件都会被赋予应用的用户标识，并且正常情况下不能被其他包访问。当通过getSharedPreferences（String，int）、openFileOutput（String、int）或者openOrCreate Database（String、int、SQLiteDatabase.CursorFactory）创建一个新文件时，开发者可以同时或分别使用MODE_WORLD_READABLE和MODE_WORLD_RITEABLE标志允许其他包读/写此文件。当设置了这些标志后，这个文件仍然属于自己的应用程序，但是它的全局读/写和读/写权限已经设置，所以其他任何应用程序可以看到它。
+
+
+
+**关于签名：**
+
+build/target/product/security目录中有四组默认签名供Android.mk在编译APK使用：
+
+1、testkey：普通APK，默认情况下使用。
+
+2、platform：该APK完成一些系统的核心功能。经过对系统中存在的文件夹的访问测试，这种方式编译出来的APK所在进程的UID为system。
+
+3、shared：该APK需要和home/contacts进程共享数据。
+
+4、media：该APK是media/download系统中的一环。
+
+应用程序的Android.mk中有一个LOCAL_CERTIFICATE字段，由它指定用哪个key签名，未指定的默认用testkey.
+
+
+Uid 类似与标定 pc机用户的权限          权限高 享有的资源就多
+
+多个application共享同一个process 
+
+<application >下的
+
+android:process
+
+By setting this attribute to a process name that's shared with anotherapplication, you can arrange for components of both applications to run inthe same process — but only if the two applications also share auser ID and be signed with the same certificate.
