@@ -3,7 +3,7 @@ title: Android缓存机制-LRUCache
 date: 2019-01-05 17:07:54
 tags:
 - LRUCache
-categoreis:
+categories:
 - 数据结构
 ---
 #### 一、Android中的缓存策略
