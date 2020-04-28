@@ -25,3 +25,14 @@ categories:
 #### HEXO部署
 >hexo g
 >hexo d
+
+#### 解决TaskCanceledException
+git提交
+git remote add origin https://github.com/hellofriday/hellofriday.github.com.git
+git add .
+git commit -m 'add blog'
+git push --set-upstream origin hexo
+
+hexo clean
+hexo g -d
+
