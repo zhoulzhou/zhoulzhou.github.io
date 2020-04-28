@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://weiteluwei.com/2018/12/01/Hexo-%E7%BB%91%E5%AE%9A%E4%B8%AA%E4%BA%BA%E5%9F%9F%E5%90%8D/</loc>
+    <lastmod>2020-04-28T15:43:49.318Z</lastmod>
+  </url>  <url>
     <loc>https://weiteluwei.com/2019/02/13/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E7%9B%B8%E5%85%B3%E7%9A%84%E5%AE%9E%E4%BE%8B/</loc>
     <lastmod>2019-02-15T14:45:36.924Z</lastmod>
   </url>  <url>
@@ -10,10 +13,10 @@
     <loc>https://weiteluwei.com/2019/02/13/HTTPS%E5%8A%A0%E5%AF%86%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%8F%A1%E6%89%8B%E8%BF%87%E7%A8%8B/</loc>
     <lastmod>2019-02-15T14:45:36.922Z</lastmod>
   </url>  <url>
-    <loc>https://weiteluwei.com/2019/02/12/%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/</loc>
+    <loc>https://weiteluwei.com/2019/02/12/OSI%E4%B8%83%E5%B1%82%E6%A8%A1%E5%9E%8B/</loc>
     <lastmod>2019-02-12T11:30:57.128Z</lastmod>
   </url>  <url>
-    <loc>https://weiteluwei.com/2019/02/12/OSI%E4%B8%83%E5%B1%82%E6%A8%A1%E5%9E%8B/</loc>
+    <loc>https://weiteluwei.com/2019/02/12/%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/</loc>
     <lastmod>2019-02-12T11:30:57.128Z</lastmod>
   </url>  <url>
     <loc>https://weiteluwei.com/2019/02/12/HTTP%E6%8A%A5%E6%96%87%E6%A0%BC%E5%BC%8F/</loc>
@@ -192,9 +195,6 @@
   </url>  <url>
     <loc>https://weiteluwei.com/2018/12/02/Hexo-%E9%A6%96%E9%A1%B5%E4%B8%8D%E6%98%BE%E7%A4%BA%E5%85%A8%E6%96%87%E5%8F%AA%E6%98%BE%E7%A4%BA%E9%A2%84%E8%A7%88/</loc>
     <lastmod>2018-12-02T07:29:53.820Z</lastmod>
-  </url>  <url>
-    <loc>https://weiteluwei.com/2018/12/01/Hexo-%E7%BB%91%E5%AE%9A%E4%B8%AA%E4%BA%BA%E5%9F%9F%E5%90%8D/</loc>
-    <lastmod>2018-12-02T04:35:44.964Z</lastmod>
   </url>  <url>
     <loc>https://weiteluwei.com/2018/12/01/ADB-%E5%91%BD%E4%BB%A4/</loc>
     <lastmod>2018-12-01T13:50:50.201Z</lastmod>
